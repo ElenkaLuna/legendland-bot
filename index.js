@@ -1,4 +1,4 @@
-const { Client, GatewayIntentBits, PermissionsBitField } = require('discord.js');
+const { Client, GatewayIntentBits } = require('discord.js');
 require('dotenv').config();
 
 const client = new Client({
@@ -24,7 +24,7 @@ client.on('messageCreate', async message => {
 
     const guild = message.guild;
 
-    await message.channel.send('⚙ Vytvářím finální LegendLand server...');
+    await message.channel.send('⚙ Vytvářím FINÁLNÍ LegendLand server...');
 
     // SMAZAT KANÁLY
     for (const c of guild.channels.cache.values()) {
@@ -38,48 +38,9 @@ client.on('messageCreate', async message => {
       }
     }
 
-    // ROLE + BARVY
-    const roles = [
-      ["🌸 Majitelka DC", "#ff69b4"],
-      ["👑 Majitel", "#ff0000"],
-      ["🔧 Technik", "#555555"],
-      ["🔧 Technička", "#555555"],
-      ["🛡 Hlavní admin", "#8B0000"],
-      ["🛡 Hlavní adminka", "#8B0000"],
-      ["⚔ Admin", "#ff4500"],
-      ["⚔ Adminka", "#ff4500"],
-      ["⭐ Helper+", "#ffa500"],
-      ["⭐ Helperka+", "#ffa500"],
-      ["🛟 Helper", "#ffff00"],
-      ["🛟 Helperka", "#ffff00"],
-      ["🏗 Hlavní stavitel", "#8b4513"],
-      ["🏗 Hlavní stavitelka", "#8b4513"],
-      ["🧱 Stavitel", "#cd853f"],
-      ["🧱 Stavitelka", "#cd853f"],
-      ["🎉 Eventer", "#800080"],
-      ["🎉 Eventerka", "#800080"],
-      ["📢 Tvůrce obsahu", "#1e90ff"],
-      ["📢 Tvůrkyně obsahu", "#1e90ff"],
-      ["🩺 Doktor", "#00ff00"],
-      ["🩺 Doktorka", "#00ff00"],
-      ["💎 VIP", "#00ffff"],
-      ["💠 VIP+", "#00bfff"],
-      ["👑 VIP++", "#1e90ff"],
-      ["✨ Legend VIP", "#9400d3"],
-      ["🎮 Hráč", "#00ff00"]
-    ];
-
-    const created = {};
-
-    for (const [name, color] of roles) {
-      created[name] = await guild.roles.create({
-        name,
-        color
-      });
-    }
-
-    // A-TEAM role
-    const staff = [
+    // ROLE
+    const roleList = [
+      "🌸 Majitelka DC","👑 Majitel",
       "🔧 Technik","🔧 Technička",
       "🛡 Hlavní admin","🛡 Hlavní adminka",
       "⚔ Admin","⚔ Adminka",
@@ -89,11 +50,49 @@ client.on('messageCreate', async message => {
       "🧱 Stavitel","🧱 Stavitelka",
       "🎉 Eventer","🎉 Eventerka",
       "📢 Tvůrce obsahu","📢 Tvůrkyně obsahu",
-      "🩺 Doktor","🩺 Doktorka"
+      "🩺 Doktor","🩺 Doktorka",
+      "💎 VIP","💠 VIP+","👑 VIP++","✨ Legend VIP",
+      "🎮 Hráč","🏅 Aktivní","⭐ Zkušený","💠 Veterán","💎 Legenda"
     ];
 
+    const roles = {};
+    for (const name of roleList) {
+      roles[name] = await guild.roles.create({ name });
+    }
+
+    const staffRoles = roleList.filter(r =>
+      r.includes("Technik") ||
+      r.includes("admin") ||
+      r.includes("Admin") ||
+      r.includes("Helper") ||
+      r.includes("stavitel") ||
+      r.includes("Event") ||
+      r.includes("Tvůrce") ||
+      r.includes("Doktor")
+    );
+
     // FUNKCE KATEGORIE
-    const createCat = async (name, channels, visibleRoles) => {
+    const createCategory = async (name, channels, visible = roleList) => {
+
+      const perms = [
+        {
+          id: guild.roles.everyone.id,
+          allow: ['ViewChannel']
+        }
+      ];
+
+      const cat = await guild.channels.create({ name, type: 4 });
+
+      for (const ch of channels) {
+        await guild.channels.create({
+          name: ch,
+          type: 0,
+          parent: cat.id
+        });
+      }
+    };
+
+    const createHiddenCategory = async (name, channels, allowedRoles) => {
 
       const perms = [
         {
@@ -102,9 +101,9 @@ client.on('messageCreate', async message => {
         }
       ];
 
-      for (const r of visibleRoles) {
+      for (const r of allowedRoles) {
         perms.push({
-          id: created[r].id,
+          id: roles[r].id,
           allow: ['ViewChannel']
         });
       }
@@ -124,30 +123,112 @@ client.on('messageCreate', async message => {
       }
     };
 
-    // VEŘEJNÉ
-    await createCat("💬 Komunita", [
+    // KATEGORIE
+    await createCategory("👋 Ověření", [
+      "👋│vitej",
+      "📜│pravidla",
+      "✅│overeni"
+    ]);
+
+    await createCategory("📢 Informace", [
+      "📢│oznámení",
+      "🧭│jak-se-pripojit",
+      "🌐│hlasovaci-stranky",
+      "🗺│dynmapa",
+      "📱│socialni-site"
+    ]);
+
+    await createCategory("📊 Statistiky", [
+      "📡│server-status",
+      "👥│hraci-online"
+    ]);
+
+    await createCategory("💬 Komunita", [
       "💬│pokec",
       "📷│fotky",
-      "💡│napady"
-    ], roles.map(r => r[0]));
+      "💡│napady",
+      "🏗│stavby",
+      "🗳│hlasovani"
+    ]);
+
+    await createCategory("⛏ Minecraft", [
+      "⛏│mc-chat",
+      "📜│commandy",
+      "🦠│nemoci",
+      "🏠│home",
+      "🏡│residence"
+    ]);
+
+    await createCategory("📚 Návody", [
+      "📚│navody",
+      "📚│bot-navod",
+      "📚│hudba",
+      "📚│admin-navod"
+    ]);
+
+    await createCategory("🎫 Podpora", [
+      "🎫│podpora",
+      "📋│nabory"
+    ]);
+
+    await createCategory("💎 VIP", [
+      "💬│vipchat",
+      "🎁│vip-vyhody",
+      "📢│vip-oznameni"
+    ]);
 
     // A-TEAM (SKRYTÝ)
-    await createCat("🛡 A-TEAM", [
-      "💬│admin-chat",
+    await createHiddenCategory("🛡 A-TEAM", [
       "🛠│admin-navod",
-      "🚨│banovaci-system"
-    ], ["🌸 Majitelka DC","👑 Majitel", ...staff]);
+      "📜│admin-pravidla",
+      "🚨│banovaci-system",
+      "💬│admin-chat",
+      "🛡│AT porada",
+      "⚙│technicka-mistnost",
+      "🎉│event-tym",
+      "🏗│stavitele",
+      "🤖│bot-prikazy"
+    ], ["🌸 Majitelka DC","👑 Majitel", ...staffRoles]);
+
+    // LOGY (SKRYTÉ)
+    await createHiddenCategory("📜 LOGY", [
+      "📜│log-zpravy",
+      "🔨│log-moderace",
+      "👤│log-clenove",
+      "⚙│log-server"
+    ], ["🌸 Majitelka DC","👑 Majitel", ...staffRoles]);
 
     // VOICE
     const voice = await guild.channels.create({ name:"🎤 Hlasové", type:4 });
 
-    await guild.channels.create({ name:"🔊 Hlas 1", type:2, parent:voice.id });
-    await guild.channels.create({ name:"🔊 Hlas 2", type:2, parent:voice.id });
-    await guild.channels.create({ name:"🔊 Hlas 3", type:2, parent:voice.id });
-    await guild.channels.create({ name:"🎵 Hudba", type:2, parent:voice.id });
-    await guild.channels.create({ name:"🌙 AFK", type:2, parent:voice.id });
+    const voices = ["🔊 Hlas 1","🔊 Hlas 2","🔊 Hlas 3","🎵 Hudba","🌙 AFK"];
+    for (const v of voices) {
+      await guild.channels.create({ name:v, type:2, parent:voice.id });
+    }
 
-    await message.channel.send("✅ HOTOVO – server nastaven.");
+    // AT VOICE
+    const atVoice = await guild.channels.create({
+      name:"🛡 AT Hlasové",
+      type:4,
+      permissionOverwrites: [
+        { id: guild.roles.everyone.id, deny:['ViewChannel'] },
+        { id: roles["🌸 Majitelka DC"].id, allow:['ViewChannel'] },
+        { id: roles["👑 Majitel"].id, allow:['ViewChannel'] }
+      ]
+    });
+
+    const atVoices = [
+      "🛡│AT porada",
+      "⚙│Technická místnost",
+      "🎉│Event tým",
+      "🏗│Stavitelé"
+    ];
+
+    for (const v of atVoices) {
+      await guild.channels.create({ name:v, type:2, parent:atVoice.id });
+    }
+
+    await message.channel.send("✅ FINÁLNÍ SERVER VYTVOŘEN.");
   }
 });
 
