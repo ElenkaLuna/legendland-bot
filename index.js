@@ -1,11 +1,7 @@
 const {
   Client,
   GatewayIntentBits,
-  ChannelType,
-  PermissionsBitField,
-  ActionRowBuilder,
-  ButtonBuilder,
-  ButtonStyle
+  ChannelType
 } = require('discord.js');
 
 require('dotenv').config();
@@ -41,6 +37,7 @@ client.on("messageCreate", async (msg) => {
   if (msg.content !== "!setup") return;
 
   const g = msg.guild;
+  const everyone = g.roles.everyone;
 
   await msg.reply("🔥 Čistím a stavím server...");
 
@@ -49,7 +46,7 @@ client.on("messageCreate", async (msg) => {
     await ch.delete().catch(() => {});
   }
 
-  // ===== ROLE (bez duplicit)
+  // ===== ROLE
   const majitelka = await role(g, "🌸 Majitelka DC");
   const majitel = await role(g, "👑 Majitel");
 
@@ -65,19 +62,15 @@ client.on("messageCreate", async (msg) => {
   const hlavniStavitelka = await role(g, "🏗 Hlavní stavitelka");
 
   const vip = await role(g, "💎 VIP");
-  const hrac = await role(g, "🎮 Hráč");
-
-  const staff = await role(g, "@Staff");
-
-  const everyone = g.roles.everyone;
+  await role(g, "🎮 Hráč");
+  await role(g, "@Staff");
 
   // ===== Ověření
   const overeni = await cat(g, "👋 Ověření");
   const vitej = await text(g, "👋│vitej", overeni);
-  const pravidla = await text(g, "📜│pravidla", overeni);
+  await text(g, "📜│pravidla", overeni);
   await text(g, "✅│overeni", overeni);
 
-  // lock
   await vitej.permissionOverwrites.set([
     { id: everyone.id, deny: ["SendMessages"] },
     { id: majitelka.id, allow: ["SendMessages"] }
@@ -112,24 +105,29 @@ client.on("messageCreate", async (msg) => {
   await text(g, "🏠│home", mc);
   await text(g, "🏡│residence", mc);
 
-  // ===== VOICE
-  const voiceCat = await cat(g, "🎤 HLASOVÉ KANÁLY");
-  await voice(g, "🔊│Hlas 1", voiceCat);
-  await voice(g, "🔊│Hlas 2", voiceCat);
-  await voice(g, "🔊│Hlas 3", voiceCat);
-  await voice(g, "🎵│Hudba", voiceCat);
-  await voice(g, "🌙│AFK", voiceCat);
+  // ===== VOICE HLAVNÍ
+  const voiceMain = await cat(g, "🎤 HLASOVÉ KANÁLY");
+  await voice(g, "🔊│Hlas 1", voiceMain);
+  await voice(g, "🔊│Hlas 2", voiceMain);
+  await voice(g, "🔊│Hlas 3", voiceMain);
+  await voice(g, "🎵│Hudba", voiceMain);
+  await voice(g, "🌙│AFK", voiceMain);
 
   // ===== VIP
   const vipCat = await cat(g, "💎 VIP");
-  const vipChat = await text(g, "💬│vipchat", vipCat);
+  await text(g, "💬│vipchat", vipCat);
+
+  const vipVoice = await cat(g, "🎤 HLASOVÉ KANÁLY VIP");
+  await voice(g, "🔊│Hlas 1", vipVoice);
+  await voice(g, "🔊│Hlas 2", vipVoice);
+  await voice(g, "🔊│Hlas 3", vipVoice);
+  await voice(g, "🎵│Hudba", vipVoice);
 
   await vipCat.permissionOverwrites.set([
     { id: everyone.id, deny: ["ViewChannel"] },
     { id: vip.id, allow: ["ViewChannel"] },
     { id: majitel.id, allow: ["ViewChannel"] },
-    { id: majitelka.id, allow: ["ViewChannel"] },
-    { id: staff.id, allow: ["ViewChannel"] }
+    { id: majitelka.id, allow: ["ViewChannel"] }
   ]);
 
   // ===== PODPORA
@@ -137,30 +135,31 @@ client.on("messageCreate", async (msg) => {
   await text(g, "🎫│podpora", pod);
   await text(g, "📋│nabory", pod);
 
-  // ===== A-TEAM
+  // ===== A-TEAM TEXT
   const team = await cat(g, "🛡 A-TEAM");
-
-  const adminNavod = await text(g, "🛠│admin-navod", team);
-  const adminPravidla = await text(g, "📜│admin-pravidla", team);
-  const ban = await text(g, "🚨│banovaci-system", team);
-  await text(g, "💬│admin-chat", team);
-  await text(g, "🛡│AT porada", team);
-
   const tech = await text(g, "⚙│technicka-mistnost", team);
   const event = await text(g, "🎉│event-tym", team);
   const stav = await text(g, "🏗│stavitele", team);
+
+  await text(g, "🛠│admin-navod", team);
+  await text(g, "📜│admin-pravidla", team);
+  await text(g, "🚨│banovaci-system", team);
+  await text(g, "💬│admin-chat", team);
+  await text(g, "🛡│AT porada", team);
   await text(g, "🤖│bot-prikazy", team);
 
-  // VOICE AT
-  await voice(g, "🔊│Hlas 1", team);
-  await voice(g, "🔊│Hlas 2", team);
-  await voice(g, "🎵│Hudba", team);
-  await voice(g, "🛡│AT porada", team);
-  await voice(g, "⚙│Technická místnost", team);
-  await voice(g, "🎉│Event tým", team);
-  await voice(g, "🏗│Stavitelé", team);
+  // ===== A-TEAM VOICE (SPRÁVNĚ!)
+  const teamVoice = await cat(g, "🎤 HLASOVÉ KANÁLY AT");
 
-  // ===== PERMISSIONS SPECIFICKÉ
+  await voice(g, "🔊│Hlas 1", teamVoice);
+  await voice(g, "🔊│Hlas 2", teamVoice);
+  await voice(g, "🎵│Hudba", teamVoice);
+  await voice(g, "🛡│AT porada", teamVoice);
+  await voice(g, "⚙│Technická místnost", teamVoice);
+  await voice(g, "🎉│Event tým", teamVoice);
+  await voice(g, "🏗│Stavitelé", teamVoice);
+
+  // ===== PERMISSIONS
   const lockTo = async (ch, roles) => {
     await ch.permissionOverwrites.set([
       { id: everyone.id, deny: ["ViewChannel"] },
@@ -194,7 +193,7 @@ client.on("messageCreate", async (msg) => {
     { id: majitelka.id, allow: ["ViewChannel"] }
   ]);
 
-  await msg.reply("✅ HOTOVO – SERVER JE ČISTÝ A SPRÁVNÝ");
+  await msg.reply("✅ HOTOVO – TEĎ JE TO SPRÁVNĚ");
 });
 
 client.login(process.env.TOKEN);
