@@ -156,6 +156,23 @@ client.on("messageCreate", async (msg) => {
 
   // ===== A-TEAM TEXT
   const team = await cat(g, "🛡 A-TEAM");
+  await team.permissionOverwrites.set([
+  { id: everyone.id, deny: ["ViewChannel"] },
+
+  { id: majitel.id, allow: ["ViewChannel"] },
+  { id: majitelka.id, allow: ["ViewChannel"] },
+
+  { id: technik.id, allow: ["ViewChannel"] },
+  { id: technicka.id, allow: ["ViewChannel"] },
+
+  { id: eventer.id, allow: ["ViewChannel"] },
+  { id: eventerka.id, allow: ["ViewChannel"] },
+
+  { id: stavitel.id, allow: ["ViewChannel"] },
+  { id: stavitelka.id, allow: ["ViewChannel"] },
+  { id: hlavniStavitel.id, allow: ["ViewChannel"] },
+  { id: hlavniStavitelka.id, allow: ["ViewChannel"] }
+]);
   const tech = await text(g, "⚙│technicka-mistnost", team);
   const event = await text(g, "🎉│event-tym", team);
   const stav = await text(g, "🏗│stavitele", team);
