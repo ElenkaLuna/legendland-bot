@@ -1,10 +1,11 @@
 const {
   Client,
   GatewayIntentBits,
+  ChannelType,
+  PermissionsBitField,
   ActionRowBuilder,
   ButtonBuilder,
-  ButtonStyle,
-  ChannelType
+  ButtonStyle
 } = require('discord.js');
 
 require('dotenv').config();
@@ -14,111 +15,115 @@ const client = new Client({
 });
 
 // ===== HELPER
-const getRole = (guild, name) => guild.roles.cache.find(r => r.name === name);
-const getChannel = (guild, name) => guild.channels.cache.find(c => c.name === name);
+const getRole = (g, name) => g.roles.cache.find(r => r.name === name);
 
-async function createRoleIfNot(guild, name) {
-  let role = getRole(guild, name);
-  if (!role) role = await guild.roles.create({ name });
-  return role;
+async function role(g, name) {
+  let r = getRole(g, name);
+  if (!r) r = await g.roles.create({ name });
+  return r;
 }
 
-async function createChannelIfNot(guild, name, type, parent = null) {
-  let ch = getChannel(guild, name);
-  if (!ch) {
-    ch = await guild.channels.create({
-      name,
-      type,
-      parent: parent?.id
-    });
-  }
-  return ch;
+async function cat(g, name) {
+  return await g.channels.create({ name, type: ChannelType.GuildCategory });
 }
 
-// ===== SETUP (SAFE)
-client.on('messageCreate', async message => {
+async function text(g, name, parent) {
+  return await g.channels.create({ name, type: ChannelType.GuildText, parent });
+}
 
-  if (message.author.bot) return;
-  if (message.content !== "!setup") return;
+async function voice(g, name, parent) {
+  return await g.channels.create({ name, type: ChannelType.GuildVoice, parent });
+}
 
-  const guild = message.guild;
+// ===== SETUP
+client.on("messageCreate", async (msg) => {
+  if (msg.author.bot) return;
+  if (msg.content !== "!setup") return;
 
-  await message.reply("⚙️ Opravuji server (nic nemažu)...");
+  const g = msg.guild;
 
-  // ===== ROLE (jen pokud chybí)
-  const majitelka = await createRoleIfNot(guild, "🌸 Majitelka DC");
-  const majitel = await createRoleIfNot(guild, "👑 Majitel");
+  await msg.reply("🔥 Čistím a stavím server...");
 
-  const technik = await createRoleIfNot(guild, "🔧 Technik");
-  const technicka = await createRoleIfNot(guild, "🔧 Technička");
-
-  const eventer = await createRoleIfNot(guild, "🎉 Eventer");
-  const eventerka = await createRoleIfNot(guild, "🎉 Eventerka");
-
-  const stavitel = await createRoleIfNot(guild, "🧱 Stavitel");
-  const stavitelka = await createRoleIfNot(guild, "🧱 Stavitelka");
-
-  const hlavniStavitel = await createRoleIfNot(guild, "🏗 Hlavní stavitel");
-  const hlavniStavitelka = await createRoleIfNot(guild, "🏗 Hlavní stavitelka");
-
-  const vip = await createRoleIfNot(guild, "💎 VIP");
-  const hrac = await createRoleIfNot(guild, "🎮 Hráč");
-
-  // STAFF ROLE
-  let staff = getRole(guild, "@Staff");
-  if (!staff) {
-    staff = await guild.roles.create({
-      name: "@Staff",
-      mentionable: false
-    });
+  // ===== SMAZAT KANÁLY
+  for (const ch of g.channels.cache.values()) {
+    await ch.delete().catch(() => {});
   }
 
-  const everyone = guild.roles.everyone;
+  // ===== ROLE (bez duplicit)
+  const majitelka = await role(g, "🌸 Majitelka DC");
+  const majitel = await role(g, "👑 Majitel");
 
-  // ===== KATEGORIE
-  const teamCat = await createChannelIfNot(guild, "🛡 A-TEAM", 4);
-  const vipCat = await createChannelIfNot(guild, "💎 VIP", 4);
+  const technik = await role(g, "🔧 Technik");
+  const technicka = await role(g, "🔧 Technička");
 
-  // ===== STAVITELÉ (FIX)
-  const stavCh = await createChannelIfNot(guild, "🏗│stavitele", 0, teamCat);
-  const stavVoice = await createChannelIfNot(guild, "🏗│Stavitelé", 2, teamCat);
+  const eventer = await role(g, "🎉 Eventer");
+  const eventerka = await role(g, "🎉 Eventerka");
 
-  await stavCh.permissionOverwrites.set([
-    { id: everyone.id, deny: ["ViewChannel"] },
-    { id: stavitel.id, allow: ["ViewChannel"] },
-    { id: stavitelka.id, allow: ["ViewChannel"] },
-    { id: hlavniStavitel.id, allow: ["ViewChannel"] },
-    { id: hlavniStavitelka.id, allow: ["ViewChannel"] },
-    { id: majitel.id, allow: ["ViewChannel"] },
-    { id: majitelka.id, allow: ["ViewChannel"] }
-  ]);
-  await ensureFullStructure(guild);
+  const stavitel = await role(g, "🧱 Stavitel");
+  const stavitelka = await role(g, "🧱 Stavitelka");
+  const hlavniStavitel = await role(g, "🏗 Hlavní stavitel");
+  const hlavniStavitelka = await role(g, "🏗 Hlavní stavitelka");
 
-  await stavVoice.permissionOverwrites.set(stavCh.permissionOverwrites.cache.map(p => p));
+  const vip = await role(g, "💎 VIP");
+  const hrac = await role(g, "🎮 Hráč");
 
-  // ===== EVENT
-  const eventCh = await createChannelIfNot(guild, "🎉│event-tym", 0, teamCat);
+  const staff = await role(g, "@Staff");
 
-  await eventCh.permissionOverwrites.set([
-    { id: everyone.id, deny: ["ViewChannel"] },
-    { id: eventer.id, allow: ["ViewChannel"] },
-    { id: eventerka.id, allow: ["ViewChannel"] },
-    { id: majitel.id, allow: ["ViewChannel"] },
-    { id: majitelka.id, allow: ["ViewChannel"] }
-  ]);
+  const everyone = g.roles.everyone;
 
-  // ===== TECH
-  const techCh = await createChannelIfNot(guild, "⚙│technicka-mistnost", 0, teamCat);
+  // ===== Ověření
+  const overeni = await cat(g, "👋 Ověření");
+  const vitej = await text(g, "👋│vitej", overeni);
+  const pravidla = await text(g, "📜│pravidla", overeni);
+  await text(g, "✅│overeni", overeni);
 
-  await techCh.permissionOverwrites.set([
-    { id: everyone.id, deny: ["ViewChannel"] },
-    { id: technik.id, allow: ["ViewChannel"] },
-    { id: technicka.id, allow: ["ViewChannel"] },
-    { id: majitel.id, allow: ["ViewChannel"] },
-    { id: majitelka.id, allow: ["ViewChannel"] }
+  // lock
+  await vitej.permissionOverwrites.set([
+    { id: everyone.id, deny: ["SendMessages"] },
+    { id: majitelka.id, allow: ["SendMessages"] }
   ]);
 
-  // ===== VIP FIX
+  // ===== Informace
+  const info = await cat(g, "📢 Informace");
+  await text(g, "📢│oznámení", info);
+  await text(g, "🧭│jak-se-pripojit", info);
+  await text(g, "🌐│hlasovaci-stranky", info);
+  await text(g, "🗺│dynmapa", info);
+  await text(g, "📱│socialni-site", info);
+
+  // ===== Statistiky
+  const stats = await cat(g, "📊 Statistiky");
+  await text(g, "📡│server-status", stats);
+  await voice(g, "👥 hráči-online", stats);
+
+  // ===== Komunita
+  const kom = await cat(g, "💬 Komunita");
+  await text(g, "💬│pokec", kom);
+  await text(g, "📷│fotky", kom);
+  await text(g, "💡│napady", kom);
+  await text(g, "🏗│stavby", kom);
+  await text(g, "🗳│hlasovani", kom);
+
+  // ===== Minecraft
+  const mc = await cat(g, "⛏ Minecraft");
+  await text(g, "⛏│mc-chat", mc);
+  await text(g, "📜│commandy", mc);
+  await text(g, "🦠│nemoci", mc);
+  await text(g, "🏠│home", mc);
+  await text(g, "🏡│residence", mc);
+
+  // ===== VOICE
+  const voiceCat = await cat(g, "🎤 HLASOVÉ KANÁLY");
+  await voice(g, "🔊│Hlas 1", voiceCat);
+  await voice(g, "🔊│Hlas 2", voiceCat);
+  await voice(g, "🔊│Hlas 3", voiceCat);
+  await voice(g, "🎵│Hudba", voiceCat);
+  await voice(g, "🌙│AFK", voiceCat);
+
+  // ===== VIP
+  const vipCat = await cat(g, "💎 VIP");
+  const vipChat = await text(g, "💬│vipchat", vipCat);
+
   await vipCat.permissionOverwrites.set([
     { id: everyone.id, deny: ["ViewChannel"] },
     { id: vip.id, allow: ["ViewChannel"] },
@@ -127,154 +132,69 @@ client.on('messageCreate', async message => {
     { id: staff.id, allow: ["ViewChannel"] }
   ]);
 
-  await createChannelIfNot(guild, "💬│vipchat", 0, vipCat);
+  // ===== PODPORA
+  const pod = await cat(g, "🎫 Podpora");
+  await text(g, "🎫│podpora", pod);
+  await text(g, "📋│nabory", pod);
 
-  await message.reply("✅ HOTOVO – NIC SE NESMAZALO");
-});
+  // ===== A-TEAM
+  const team = await cat(g, "🛡 A-TEAM");
 
-// ===== VERIFY
-client.on('messageCreate', async message => {
-  if (message.content === "!verify") {
-    const role = getRole(message.guild, "🎮 Hráč");
-    if (!role) return;
+  const adminNavod = await text(g, "🛠│admin-navod", team);
+  const adminPravidla = await text(g, "📜│admin-pravidla", team);
+  const ban = await text(g, "🚨│banovaci-system", team);
+  await text(g, "💬│admin-chat", team);
+  await text(g, "🛡│AT porada", team);
 
-    await message.member.roles.add(role);
-    message.reply("✅ Ověřen!");
-  }
-});
+  const tech = await text(g, "⚙│technicka-mistnost", team);
+  const event = await text(g, "🎉│event-tym", team);
+  const stav = await text(g, "🏗│stavitele", team);
+  await text(g, "🤖│bot-prikazy", team);
 
-// ===== TICKET
-client.on('messageCreate', async message => {
-  if (message.content === "!ticket") {
+  // VOICE AT
+  await voice(g, "🔊│Hlas 1", team);
+  await voice(g, "🔊│Hlas 2", team);
+  await voice(g, "🎵│Hudba", team);
+  await voice(g, "🛡│AT porada", team);
+  await voice(g, "⚙│Technická místnost", team);
+  await voice(g, "🎉│Event tým", team);
+  await voice(g, "🏗│Stavitelé", team);
 
-    const ch = await message.guild.channels.create({
-      name: `ticket-${message.author.username}`,
-      type: ChannelType.GuildText
-    });
-
-    await ch.send("🎫 Ticket vytvořen");
-  }
-});
-// ===== DOPLNĚNÍ VŠECH KANÁLŮ
-async function ensureFullStructure(guild) {
-
-  const everyone = guild.roles.everyone;
-
-  const getRole = name => guild.roles.cache.find(r => r.name === name);
-
-  const majitelka = getRole("🌸 Majitelka DC");
-  const majitel = getRole("👑 Majitel");
-
-  const technik = getRole("🔧 Technik");
-  const technicka = getRole("🔧 Technička");
-
-  const eventer = getRole("🎉 Eventer");
-  const eventerka = getRole("🎉 Eventerka");
-
-  const stavitel = getRole("🧱 Stavitel");
-  const stavitelka = getRole("🧱 Stavitelka");
-  const hlavniStavitel = getRole("🏗 Hlavní stavitel");
-  const hlavniStavitelka = getRole("🏗 Hlavní stavitelka");
-
-  const vip = getRole("💎 VIP");
-
-  const getOrCreate = async (name, type, parent) => {
-    let ch = guild.channels.cache.find(c => c.name === name);
-    if (!ch) {
-      ch = await guild.channels.create({
-        name,
-        type,
-        parent: parent?.id
-      });
-    }
-    return ch;
+  // ===== PERMISSIONS SPECIFICKÉ
+  const lockTo = async (ch, roles) => {
+    await ch.permissionOverwrites.set([
+      { id: everyone.id, deny: ["ViewChannel"] },
+      ...roles.map(r => ({ id: r.id, allow: ["ViewChannel"] }))
+    ]);
   };
 
-  // ===== KATEGORIE
-  const team = await getOrCreate("🛡 A-TEAM", 4);
-  const logy = await getOrCreate("📜 LOGY", 4);
-
-  // ===== A-TEAM TEXT
-  const adminNavod = await getOrCreate("🛠│admin-navod", 0, team);
-  const adminPravidla = await getOrCreate("📜│admin-pravidla", 0, team);
-  const ban = await getOrCreate("🚨│banovaci-system", 0, team);
-  const adminChat = await getOrCreate("💬│admin-chat", 0, team);
-  const porada = await getOrCreate("🛡│AT porada", 0, team);
-  const tech = await getOrCreate("⚙│technicka-mistnost", 0, team);
-  const event = await getOrCreate("🎉│event-tym", 0, team);
-  const stav = await getOrCreate("🏗│stavitele", 0, team);
-  const botCmd = await getOrCreate("🤖│bot-prikazy", 0, team);
-
-  // ===== A-TEAM VOICE
-  await getOrCreate("🔊│Hlas 1", 2, team);
-  await getOrCreate("🔊│Hlas 2", 2, team);
-  await getOrCreate("🎵│Hudba", 2, team);
-  await getOrCreate("🛡│AT porada", 2, team);
-  await getOrCreate("⚙│Technická místnost", 2, team);
-  await getOrCreate("🎉│Event tým", 2, team);
-  await getOrCreate("🏗│Stavitelé", 2, team);
+  await lockTo(tech, [technik, technicka, majitel, majitelka]);
+  await lockTo(event, [eventer, eventerka, majitel, majitelka]);
+  await lockTo(stav, [stavitel, stavitelka, hlavniStavitel, hlavniStavitelka, majitel, majitelka]);
 
   // ===== LOGY
-  await getOrCreate("📜│log-zprávy", 0, logy);
-  await getOrCreate("🔨│log-moderace", 0, logy);
-  await getOrCreate("👤│log-členové", 0, logy);
-  await getOrCreate("⚙│log-server", 0, logy);
+  const logy = await cat(g, "📜 LOGY");
+  await text(g, "📜│log-zprávy", logy);
+  await text(g, "🔨│log-moderace", logy);
+  await text(g, "👤│log-členové", logy);
+  await text(g, "⚙│log-server", logy);
 
-  // ===== PERMISSIONS (KLÍČOVÉ)
-  const staffRoles = [
-    majitelka, majitel,
-    technik, technicka,
-    eventer, eventerka,
-    stavitel, stavitelka,
-    hlavniStavitel, hlavniStavitelka
-  ].filter(Boolean);
-
-  const allowStaff = staffRoles.map(r => ({
-    id: r.id,
-    allow: ["ViewChannel"]
-  }));
-
-  // A-TEAM vidí jen staff
-  await team.permissionOverwrites.set([
-    { id: everyone.id, deny: ["ViewChannel"] },
-    ...allowStaff
-  ]);
-
-  // LOGY nevidí hráči
   await logy.permissionOverwrites.set([
     { id: everyone.id, deny: ["ViewChannel"] },
-    { id: majitelka?.id, allow: ["ViewChannel"] },
-    { id: majitel?.id, allow: ["ViewChannel"] }
+    { id: majitelka.id, allow: ["ViewChannel"] },
+    { id: majitel.id, allow: ["ViewChannel"] }
   ]);
 
-  // TECH pouze technici
-  await tech.permissionOverwrites.set([
+  // ===== SOUKROMÝ
+  const priv = await cat(g, "🌸 SOUKROMÝ");
+  const maj = await text(g, "🌸│majitelka-navod", priv);
+
+  await maj.permissionOverwrites.set([
     { id: everyone.id, deny: ["ViewChannel"] },
-    { id: technik?.id, allow: ["ViewChannel"] },
-    { id: technicka?.id, allow: ["ViewChannel"] },
-    { id: majitel?.id, allow: ["ViewChannel"] },
-    { id: majitelka?.id, allow: ["ViewChannel"] }
+    { id: majitelka.id, allow: ["ViewChannel"] }
   ]);
 
-  // EVENT pouze event
-  await event.permissionOverwrites.set([
-    { id: everyone.id, deny: ["ViewChannel"] },
-    { id: eventer?.id, allow: ["ViewChannel"] },
-    { id: eventerka?.id, allow: ["ViewChannel"] },
-    { id: majitel?.id, allow: ["ViewChannel"] },
-    { id: majitelka?.id, allow: ["ViewChannel"] }
-  ]);
+  await msg.reply("✅ HOTOVO – SERVER JE ČISTÝ A SPRÁVNÝ");
+});
 
-  // STAVITELÉ fix
-  await stav.permissionOverwrites.set([
-    { id: everyone.id, deny: ["ViewChannel"] },
-    { id: stavitel?.id, allow: ["ViewChannel"] },
-    { id: stavitelka?.id, allow: ["ViewChannel"] },
-    { id: hlavniStavitel?.id, allow: ["ViewChannel"] },
-    { id: hlavniStavitelka?.id, allow: ["ViewChannel"] },
-    { id: majitel?.id, allow: ["ViewChannel"] },
-    { id: majitelka?.id, allow: ["ViewChannel"] }
-  ]);
-
-}
 client.login(process.env.TOKEN);
