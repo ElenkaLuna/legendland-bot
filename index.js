@@ -10,7 +10,7 @@ const client = new Client({
 });
 
 client.once('ready', () => {
-  console.log("✅ LegendLand FINAL READY");
+  console.log("✅ LegendLand FINAL");
 });
 
 client.on('messageCreate', async message => {
@@ -20,28 +20,27 @@ client.on('messageCreate', async message => {
 
   const guild = message.guild;
 
-  await message.channel.send("⚙ Nastavuji server podle finálního návrhu...");
+  await message.channel.send("⚙ Nastavuji přesně podle dokumentu...");
 
-  // ===== ROLE =====
-  const role = (name) => guild.roles.cache.find(r => r.name === name);
+  const getRole = (name) => guild.roles.cache.find(r => r.name === name);
 
-  const VIP = role("💎 VIP") || role("VIP");
-  const ADMIN = role("Admin");
-  const MOD = role("Mod");
-  const HRAC = role("Hráč");
+  const EVERYONE = guild.roles.everyone;
+  const VIP = getRole("💎 VIP");
+  const ADMIN = getRole("⚔ Admin") || getRole("Admin");
+  const HELPER = getRole("🛟 Helper") || getRole("Helper");
+  const TECH = getRole("🔧 Technik") || getRole("Technik");
 
-  // ===== CATEGORY HELPER =====
-  async function getCategory(name) {
+  // ===== HELPER FUNKCE =====
+  async function cat(name) {
     let c = guild.channels.cache.find(x => x.name === name);
     if (!c) c = await guild.channels.create({ name, type: 4 });
     return c;
   }
 
-  // ===== CHANNEL HELPER =====
-  async function createText(name, parent, perms = []) {
-    let ch = guild.channels.cache.find(c => c.name === name);
-    if (!ch) {
-      ch = await guild.channels.create({
+  async function text(name, parent, perms = []) {
+    let c = guild.channels.cache.find(x => x.name === name);
+    if (!c) {
+      c = await guild.channels.create({
         name,
         type: 0,
         parent: parent.id,
@@ -50,10 +49,10 @@ client.on('messageCreate', async message => {
     }
   }
 
-  async function createVoice(name, parent, perms = []) {
-    let ch = guild.channels.cache.find(c => c.name === name);
-    if (!ch) {
-      ch = await guild.channels.create({
+  async function voice(name, parent, perms = []) {
+    let c = guild.channels.cache.find(x => x.name === name);
+    if (!c) {
+      c = await guild.channels.create({
         name,
         type: 2,
         parent: parent.id,
@@ -63,67 +62,99 @@ client.on('messageCreate', async message => {
   }
 
   // ===== OVĚŘENÍ =====
-  const overeni = await getCategory("👋 Ověření");
+  const overeni = await cat("👋 Ověření");
 
-  await createText("👋│vitej", overeni);
-  await createText("📜│pravidla", overeni);
-  await createText("✅│overeni", overeni);
+  await text("👋│vitej", overeni);
+  await text("📜│pravidla", overeni);
+  await text("✅│overeni", overeni);
 
   // ===== INFORMACE =====
-  const info = await getCategory("📢 Informace");
+  const info = await cat("📢 Informace");
 
-  await createText("📢│oznámení", info);
-  await createText("🌐│hlasovaci-stranky", info);
+  await text("📢│oznámení", info);
+  await text("🧭│jak-se-pripojit", info);
+  await text("🌐│hlasovaci-stranky", info);
+  await text("🗺│dynmapa", info);
+  await text("📱│socialni-site", info);
+
+  // ===== STATISTIKY =====
+  const stats = await cat("📊 Statistiky");
+
+  await text("📡│server-status", stats);
 
   // ===== KOMUNITA =====
-  const chat = await getCategory("💬 Komunita");
+  const komunita = await cat("💬 Komunita");
 
-  await createText("💬│pokec", chat);
+  await text("💬│pokec", komunita);
+  await text("📷│fotky", komunita);
+  await text("💡│napady", komunita);
+  await text("🏗│stavby", komunita);
+  await text("🗳│hlasovani", komunita);
+
+  // ===== MINECRAFT =====
+  const mc = await cat("⛏ Minecraft");
+
+  await text("⛏│mc-chat", mc);
+  await text("📜│commandy", mc);
+  await text("🦠│nemoci", mc);
+  await text("🏠│home", mc);
+  await text("🏡│residence", mc);
+
+  // ===== HLASOVÉ =====
+  const voiceCat = await cat("🎤 HLASOVÉ KANÁLY");
+
+  await voice("🔊│Hlas 1", voiceCat);
+  await voice("🔊│Hlas 2", voiceCat);
+  await voice("🔊│Hlas 3", voiceCat);
+  await voice("🎵│Hudba", voiceCat);
+  await voice("🌙│AFK", voiceCat);
 
   // ===== VIP =====
-  const vip = await getCategory("💎 VIP");
+  const vip = await cat("💎 VIP");
 
-  await createText("💎│vip-chat", vip, [
-    { id: guild.roles.everyone.id, deny: [PermissionsBitField.Flags.ViewChannel] },
+  await text("💬│vipchat", vip, [
+    { id: EVERYONE.id, deny: [PermissionsBitField.Flags.ViewChannel] },
     { id: VIP?.id, allow: [PermissionsBitField.Flags.ViewChannel] }
   ]);
 
-  await createVoice("🔊│vip-hlas", vip, [
-    { id: guild.roles.everyone.id, deny: [PermissionsBitField.Flags.ViewChannel] },
-    { id: VIP?.id, allow: [
-      PermissionsBitField.Flags.ViewChannel,
-      PermissionsBitField.Flags.Connect
-    ]}
-  ]);
+  // ===== PODPORA =====
+  const podpora = await cat("🎫 Podpora");
+
+  await text("🎫│podpora", podpora);
+  await text("📋│nabory", podpora);
 
   // ===== A-TEAM =====
-  const team = await getCategory("🛠 A-TEAM");
+  const team = await cat("🛡 A-TEAM");
 
-  await createText("📢│admin-oznameni", team, [
-    { id: guild.roles.everyone.id, deny: [PermissionsBitField.Flags.ViewChannel] },
-    { id: ADMIN?.id, allow: [PermissionsBitField.Flags.ViewChannel] },
-    { id: MOD?.id, allow: [PermissionsBitField.Flags.ViewChannel] }
-  ]);
-
-  await createText("💬│admin-chat", team, [
-    { id: guild.roles.everyone.id, deny: [PermissionsBitField.Flags.ViewChannel] },
-    { id: ADMIN?.id, allow: [PermissionsBitField.Flags.ViewChannel] },
-    { id: MOD?.id, allow: [PermissionsBitField.Flags.ViewChannel] }
-  ]);
-
-  await createText("🔨│banovaci-system", team, [
-    { id: guild.roles.everyone.id, deny: [PermissionsBitField.Flags.ViewChannel] },
+  await text("🛠│admin-navod", team, [
+    { id: EVERYONE.id, deny: [PermissionsBitField.Flags.ViewChannel] },
     { id: ADMIN?.id, allow: [PermissionsBitField.Flags.ViewChannel] }
   ]);
 
-  // ===== NÁVODY =====
-  const navody = await getCategory("📘 Návody");
+  await text("📜│admin-pravidla", team, [
+    { id: EVERYONE.id, deny: [PermissionsBitField.Flags.ViewChannel] },
+    { id: ADMIN?.id, allow: [PermissionsBitField.Flags.ViewChannel] }
+  ]);
 
-  await createText("📘│navody", navody);
-  await createText("🤖│bot-navod", navody);
-  await createText("🎵│hudba", navody);
+  await text("🚨│banovaci-system", team, [
+    { id: EVERYONE.id, deny: [PermissionsBitField.Flags.ViewChannel] },
+    { id: ADMIN?.id, allow: [PermissionsBitField.Flags.ViewChannel] }
+  ]);
 
-  await message.channel.send("✅ HOTOVO – server nastaven podle návrhu");
+  await text("💬│admin-chat", team, [
+    { id: EVERYONE.id, deny: [PermissionsBitField.Flags.ViewChannel] },
+    { id: ADMIN?.id, allow: [PermissionsBitField.Flags.ViewChannel] }
+  ]);
+
+  // ===== LOGY =====
+  const logy = await cat("📜 Logy");
+
+  await text("📜│log-zprávy", logy);
+  await text("🔨│log-moderace", logy);
+  await text("👤│log-členové", logy);
+  await text("⚙│log-server", logy);
+
+  await message.channel.send("✅ HOTOVO – přesně podle dokumentu");
 });
 
 client.login(process.env.TOKEN);
