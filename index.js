@@ -14,10 +14,11 @@ const client = new Client({
   intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent]
 });
 
-// ===== LOCK FUNKCE
+// LOCK
 async function lock(channel, guild) {
   await channel.permissionOverwrites.create(guild.roles.everyone, {
-    SendMessages: false
+    SendMessages: false,
+    AddReactions: false
   });
 }
 
@@ -27,7 +28,6 @@ client.on('messageCreate', async message => {
 
   const guild = message.guild;
 
-  // ===== SETUP
   if (message.content === "!setup") {
 
     await message.channel.send("🔥 Nastavuji LegendLand...");
@@ -40,34 +40,36 @@ client.on('messageCreate', async message => {
     const text = async (name, parent) => await guild.channels.create({ name, type: 0, parent: parent.id });
     const voice = async (name, parent) => await guild.channels.create({ name, type: 2, parent: parent.id });
 
-    // Ověření
+    // ===== Ověření
     const overeni = await cat("👋 Ověření");
     const vitej = await text("👋│vitej", overeni);
     const pravidla = await text("📜│pravidla", overeni);
-    await text("✅│overeni", overeni);
+    const overeniCh = await text("✅│overeni", overeni);
 
     await lock(vitej, guild);
     await lock(pravidla, guild);
+    await lock(overeniCh, guild);
 
-    // Informace
+    // ===== Informace
     const info = await cat("📢 Informace");
-    await text("📢│oznámení", info);
+    const oznameni = await text("📢│oznámení", info);
     await text("🧭│jak-se-pripojit", info);
     const hlas = await text("🌐│hlasovaci-stranky", info);
     const dyn = await text("🗺│dynmapa", info);
-    await text("📱│socialni-site", info);
+    await text("📱│socialni_site", info);
 
+    await lock(oznameni, guild);
     await lock(hlas, guild);
     await lock(dyn, guild);
 
-    // Statistiky
+    // ===== Statistiky
     const stats = await cat("📊 Statistiky");
     const status = await text("📡│server-status", stats);
     await text("👥│hraci-online", stats);
 
     await lock(status, guild);
 
-    // Komunita
+    // ===== Komunita
     const komunita = await cat("💬 Komunita");
     await text("💬│pokec", komunita);
     await text("📷│fotky", komunita);
@@ -75,7 +77,7 @@ client.on('messageCreate', async message => {
     await text("🏗│stavby", komunita);
     await text("🗳│hlasovani", komunita);
 
-    // Minecraft
+    // ===== Minecraft
     const mc = await cat("⛏ Minecraft");
     await text("⛏│mc-chat", mc);
     await text("📜│commandy", mc);
@@ -83,7 +85,7 @@ client.on('messageCreate', async message => {
     await text("🏠│home", mc);
     await text("🏡│residence", mc);
 
-    // Voice
+    // ===== Voice
     const voiceCat = await cat("🎤 HLASOVÉ KANÁLY");
     await voice("🔊│Hlas 1", voiceCat);
     await voice("🔊│Hlas 2", voiceCat);
@@ -91,7 +93,7 @@ client.on('messageCreate', async message => {
     await voice("🎵│Hudba", voiceCat);
     await voice("🌙│AFK", voiceCat);
 
-    // VIP
+    // ===== VIP
     const vip = await cat("💎 VIP");
     await text("💬│vipchat", vip);
 
@@ -101,31 +103,38 @@ client.on('messageCreate', async message => {
     await voice("🔊│Hlas 3", vipVoice);
     await voice("🎵│Hudba", vipVoice);
 
-    // Podpora
+    // ===== Podpora
     const podpora = await cat("🎫 Podpora");
     await text("🎫│podpora", podpora);
     await text("📋│nabory", podpora);
 
-    // A-TEAM
+    // ===== A-TEAM
     const team = await cat("🛡 A-TEAM");
+    const adminNavod = await text("🛠│admin-navod", team);
+    const adminPravidla = await text("📜│admin-pravidla", team);
     const ban = await text("🚨│banovaci_system", team);
-    await text("🛠│admin-navod", team);
-    await text("📜│admin-pravidla", team);
     await text("💬│admin-chat", team);
 
+    await lock(adminNavod, guild);
+    await lock(adminPravidla, guild);
     await lock(ban, guild);
 
-    // Logy
+    // ===== LOGY
     const logy = await cat("📜 LOGY");
-    await text("📜│log-zprávy", logy);
-    await text("🔨│log-moderace", logy);
-    await text("👤│log-členové", logy);
-    await text("⚙│log-server", logy);
+    const l1 = await text("📜│log-zprávy", logy);
+    const l2 = await text("🔨│log-moderace", logy);
+    const l3 = await text("👤│log-členové", logy);
+    const l4 = await text("⚙│log-server", logy);
+
+    await lock(l1, guild);
+    await lock(l2, guild);
+    await lock(l3, guild);
+    await lock(l4, guild);
 
     await message.channel.send("✅ HOTOVO");
   }
 
-  // ===== VERIFY PANEL
+  // VERIFY
   if (message.content === "!verify") {
 
     const row = new ActionRowBuilder().addComponents(
@@ -141,7 +150,7 @@ client.on('messageCreate', async message => {
     });
   }
 
-  // ===== TICKET PANEL
+  // TICKET
   if (message.content === "!ticket") {
 
     const row = new ActionRowBuilder().addComponents(
@@ -157,7 +166,7 @@ client.on('messageCreate', async message => {
     });
   }
 
-  // ===== ANTI PING
+  // ANTI PING
   if (message.content.includes("@Staff")) {
     if (!message.member.permissions.has("Administrator")) {
       message.delete();
@@ -167,12 +176,11 @@ client.on('messageCreate', async message => {
 
 });
 
-// ===== BUTTONY
+// BUTTONY
 client.on('interactionCreate', async interaction => {
 
   if (!interaction.isButton()) return;
 
-  // VERIFY
   if (interaction.customId === "verify") {
 
     const role = interaction.guild.roles.cache.find(r => r.name.includes("Hráč"));
@@ -183,7 +191,6 @@ client.on('interactionCreate', async interaction => {
     await interaction.reply({ content: "✅ Ověření proběhlo!", ephemeral: true });
   }
 
-  // TICKET
   if (interaction.customId === "ticket") {
 
     const channel = await interaction.guild.channels.create({
