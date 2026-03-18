@@ -127,11 +127,16 @@ client.on("messageCreate", async (msg) => {
   await voice(g, "🎵│Hudba", vipVoice);
 
   await vipCat.permissionOverwrites.set([
-    { id: everyone.id, deny: ["ViewChannel"] },
-    { id: vip.id, allow: ["ViewChannel"] },
-    { id: majitel.id, allow: ["ViewChannel"] },
-    { id: majitelka.id, allow: ["ViewChannel"] }
-  ]);
+  { id: everyone.id, deny: ["ViewChannel"] },
+
+  { id: vip.id, allow: ["ViewChannel"] },
+  { id: vipPlus.id, allow: ["ViewChannel"] },
+  { id: vipPlusPlus.id, allow: ["ViewChannel"] },
+  { id: vipLegend.id, allow: ["ViewChannel"] },
+
+  { id: majitel.id, allow: ["ViewChannel"] },
+  { id: majitelka.id, allow: ["ViewChannel"] }
+]);
 
   // ===== PODPORA
   const pod = await cat(g, "🎫 Podpora");
