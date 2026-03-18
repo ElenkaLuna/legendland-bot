@@ -62,6 +62,9 @@ client.on("messageCreate", async (msg) => {
   const hlavniStavitelka = await role(g, "🏗 Hlavní stavitelka");
 
   const vip = await role(g, "💎 VIP");
+  const vipPlus = await role(g, "💠 VIP+");
+  const vipPlusPlus = await role(g, "👑 VIP++");
+  const vipLegend = await role(g, "✨ Legend VIP");
   await role(g, "🎮 Hráč");
   await role(g, "@Staff");
 
