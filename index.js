@@ -92,6 +92,7 @@ client.on('messageCreate', async message => {
     { id: majitel.id, allow: ["ViewChannel"] },
     { id: majitelka.id, allow: ["ViewChannel"] }
   ]);
+  await ensureFullStructure(guild);
 
   await stavVoice.permissionOverwrites.set(stavCh.permissionOverwrites.cache.map(p => p));
 
