@@ -66,6 +66,23 @@ client.on("messageCreate", async (msg) => {
   const vipPlusPlus = await role(g, "👑 VIP++");
   const vipLegend = await role(g, "✨ Legend VIP");
 
+  // DALŠÍ ROLE
+  const hlavniAdmin = await role(g, "🛡 Hlavní admin");
+  const hlavniAdminka = await role(g, "🛡 Hlavní adminka");
+  const admin = await role(g, "⚔ Admin");
+  const adminka = await role(g, "⚔ Adminka");
+
+  const helperPlus = await role(g, "⭐ Helper+");
+  const helperkaPlus = await role(g, "⭐ Helperka+");
+  const helper = await role(g, "🛟 Helper");
+  const helperka = await role(g, "🛟 Helperka");
+
+  const tvurce = await role(g, "📢 Tvůrce obsahu");
+  const tvurkyne = await role(g, "📢 Tvůrkyně obsahu");
+
+  const doktor = await role(g, "🩺 Doktor");
+  const doktorka = await role(g, "🩺 Doktorka");
+
   await role(g, "🎮 Hráč");
   await role(g, "@Staff");
 
@@ -123,19 +140,19 @@ client.on("messageCreate", async (msg) => {
 
   const vipVoice = await cat(g, "🎤 HLASOVÉ KANÁLY VIP");
 
+  const vipRoles = [
+    vip, vipPlus, vipPlusPlus, vipLegend,
+    majitel, majitelka,
+    technik, technicka,
+    hlavniAdmin, hlavniAdminka, admin, adminka,
+    helperPlus, helperkaPlus, helper, helperka,
+    tvurce, tvurkyne,
+    doktor, doktorka
+  ];
+
   await vipCat.permissionOverwrites.set([
     { id: everyone.id, deny: ["ViewChannel"] },
-
-    { id: vip.id, allow: ["ViewChannel"] },
-    { id: vipPlus.id, allow: ["ViewChannel"] },
-    { id: vipPlusPlus.id, allow: ["ViewChannel"] },
-    { id: vipLegend.id, allow: ["ViewChannel"] },
-
-    { id: majitel.id, allow: ["ViewChannel"] },
-    { id: majitelka.id, allow: ["ViewChannel"] },
-
-    { id: technik.id, allow: ["ViewChannel"] },
-    { id: technicka.id, allow: ["ViewChannel"] }
+    ...vipRoles.map(r => ({ id: r.id, allow: ["ViewChannel"] }))
   ]);
 
   await vipVoice.permissionOverwrites.set(vipCat.permissionOverwrites.cache.map(p => p));
@@ -153,36 +170,26 @@ client.on("messageCreate", async (msg) => {
   // ===== A-TEAM
   const team = await cat(g, "🛡 A-TEAM");
 
+  const teamRoles = [
+    majitel, majitelka,
+    technik, technicka,
+    eventer, eventerka,
+    stavitel, stavitelka, hlavniStavitel, hlavniStavitelka,
+    hlavniAdmin, hlavniAdminka, admin, adminka,
+    helperPlus, helperkaPlus, helper, helperka,
+    tvurce, tvurkyne,
+    doktor, doktorka
+  ];
+
   await team.permissionOverwrites.set([
     { id: everyone.id, deny: ["ViewChannel"] },
-
-    { id: majitel.id, allow: ["ViewChannel"] },
-    { id: majitelka.id, allow: ["ViewChannel"] },
-
-    { id: technik.id, allow: ["ViewChannel"] },
-    { id: technicka.id, allow: ["ViewChannel"] },
-
-    { id: eventer.id, allow: ["ViewChannel"] },
-    { id: eventerka.id, allow: ["ViewChannel"] },
-
-    { id: stavitel.id, allow: ["ViewChannel"] },
-    { id: stavitelka.id, allow: ["ViewChannel"] },
-    { id: hlavniStavitel.id, allow: ["ViewChannel"] },
-    { id: hlavniStavitelka.id, allow: ["ViewChannel"] }
+    ...teamRoles.map(r => ({ id: r.id, allow: ["ViewChannel"] }))
   ]);
 
   const tech = await text(g, "⚙│technicka-mistnost", team);
   const event = await text(g, "🎉│event-tym", team);
   const stav = await text(g, "🏗│stavitele", team);
 
-  await text(g, "🛠│admin-navod", team);
-  await text(g, "📜│admin-pravidla", team);
-  await text(g, "🚨│banovaci-system", team);
-  await text(g, "💬│admin-chat", team);
-  await text(g, "🛡│AT porada", team);
-  await text(g, "🤖│bot-prikazy", team);
-
-  // SPEC PERMISSIONS
   const setPerm = async (ch, roles) => {
     await ch.permissionOverwrites.set([
       { id: everyone.id, deny: ["ViewChannel"] },
@@ -209,28 +216,6 @@ client.on("messageCreate", async (msg) => {
   await setPerm(techV, [technik, technicka, majitel, majitelka]);
   await setPerm(eventV, [eventer, eventerka, majitel, majitelka]);
   await setPerm(stavV, [stavitel, stavitelka, hlavniStavitel, hlavniStavitelka, majitel, majitelka]);
-
-  // ===== LOGY
-  const logy = await cat(g, "📜 LOGY");
-  await text(g, "📜│log-zprávy", logy);
-  await text(g, "🔨│log-moderace", logy);
-  await text(g, "👤│log-členové", logy);
-  await text(g, "⚙│log-server", logy);
-
-  await logy.permissionOverwrites.set([
-    { id: everyone.id, deny: ["ViewChannel"] },
-    { id: majitelka.id, allow: ["ViewChannel"] },
-    { id: majitel.id, allow: ["ViewChannel"] }
-  ]);
-
-  // ===== SOUKROMÝ
-  const priv = await cat(g, "🌸 SOUKROMÝ");
-  const maj = await text(g, "🌸│majitelka-navod", priv);
-
-  await maj.permissionOverwrites.set([
-    { id: everyone.id, deny: ["ViewChannel"] },
-    { id: majitelka.id, allow: ["ViewChannel"] }
-  ]);
 
   await msg.reply("✅ HOTOVO – TEĎ JE TO KONEČNĚ SPRÁVNĚ");
 });
