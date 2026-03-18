@@ -186,6 +186,7 @@ client.on("messageCreate", async (msg) => {
 
   // ===== A-TEAM VOICE (SPRÁVNĚ!)
   const teamVoice = await cat(g, "🎤 HLASOVÉ KANÁLY AT");
+  await teamVoice.permissionOverwrites.set(team.permissionOverwrites.cache.map(p => p));
 
   await voice(g, "🔊│Hlas 1", teamVoice);
   await voice(g, "🔊│Hlas 2", teamVoice);
