@@ -154,5 +154,126 @@ client.on('messageCreate', async message => {
     await ch.send("🎫 Ticket vytvořen");
   }
 });
+// ===== DOPLNĚNÍ VŠECH KANÁLŮ
+async function ensureFullStructure(guild) {
 
+  const everyone = guild.roles.everyone;
+
+  const getRole = name => guild.roles.cache.find(r => r.name === name);
+
+  const majitelka = getRole("🌸 Majitelka DC");
+  const majitel = getRole("👑 Majitel");
+
+  const technik = getRole("🔧 Technik");
+  const technicka = getRole("🔧 Technička");
+
+  const eventer = getRole("🎉 Eventer");
+  const eventerka = getRole("🎉 Eventerka");
+
+  const stavitel = getRole("🧱 Stavitel");
+  const stavitelka = getRole("🧱 Stavitelka");
+  const hlavniStavitel = getRole("🏗 Hlavní stavitel");
+  const hlavniStavitelka = getRole("🏗 Hlavní stavitelka");
+
+  const vip = getRole("💎 VIP");
+
+  const getOrCreate = async (name, type, parent) => {
+    let ch = guild.channels.cache.find(c => c.name === name);
+    if (!ch) {
+      ch = await guild.channels.create({
+        name,
+        type,
+        parent: parent?.id
+      });
+    }
+    return ch;
+  };
+
+  // ===== KATEGORIE
+  const team = await getOrCreate("🛡 A-TEAM", 4);
+  const logy = await getOrCreate("📜 LOGY", 4);
+
+  // ===== A-TEAM TEXT
+  const adminNavod = await getOrCreate("🛠│admin-navod", 0, team);
+  const adminPravidla = await getOrCreate("📜│admin-pravidla", 0, team);
+  const ban = await getOrCreate("🚨│banovaci-system", 0, team);
+  const adminChat = await getOrCreate("💬│admin-chat", 0, team);
+  const porada = await getOrCreate("🛡│AT porada", 0, team);
+  const tech = await getOrCreate("⚙│technicka-mistnost", 0, team);
+  const event = await getOrCreate("🎉│event-tym", 0, team);
+  const stav = await getOrCreate("🏗│stavitele", 0, team);
+  const botCmd = await getOrCreate("🤖│bot-prikazy", 0, team);
+
+  // ===== A-TEAM VOICE
+  await getOrCreate("🔊│Hlas 1", 2, team);
+  await getOrCreate("🔊│Hlas 2", 2, team);
+  await getOrCreate("🎵│Hudba", 2, team);
+  await getOrCreate("🛡│AT porada", 2, team);
+  await getOrCreate("⚙│Technická místnost", 2, team);
+  await getOrCreate("🎉│Event tým", 2, team);
+  await getOrCreate("🏗│Stavitelé", 2, team);
+
+  // ===== LOGY
+  await getOrCreate("📜│log-zprávy", 0, logy);
+  await getOrCreate("🔨│log-moderace", 0, logy);
+  await getOrCreate("👤│log-členové", 0, logy);
+  await getOrCreate("⚙│log-server", 0, logy);
+
+  // ===== PERMISSIONS (KLÍČOVÉ)
+  const staffRoles = [
+    majitelka, majitel,
+    technik, technicka,
+    eventer, eventerka,
+    stavitel, stavitelka,
+    hlavniStavitel, hlavniStavitelka
+  ].filter(Boolean);
+
+  const allowStaff = staffRoles.map(r => ({
+    id: r.id,
+    allow: ["ViewChannel"]
+  }));
+
+  // A-TEAM vidí jen staff
+  await team.permissionOverwrites.set([
+    { id: everyone.id, deny: ["ViewChannel"] },
+    ...allowStaff
+  ]);
+
+  // LOGY nevidí hráči
+  await logy.permissionOverwrites.set([
+    { id: everyone.id, deny: ["ViewChannel"] },
+    { id: majitelka?.id, allow: ["ViewChannel"] },
+    { id: majitel?.id, allow: ["ViewChannel"] }
+  ]);
+
+  // TECH pouze technici
+  await tech.permissionOverwrites.set([
+    { id: everyone.id, deny: ["ViewChannel"] },
+    { id: technik?.id, allow: ["ViewChannel"] },
+    { id: technicka?.id, allow: ["ViewChannel"] },
+    { id: majitel?.id, allow: ["ViewChannel"] },
+    { id: majitelka?.id, allow: ["ViewChannel"] }
+  ]);
+
+  // EVENT pouze event
+  await event.permissionOverwrites.set([
+    { id: everyone.id, deny: ["ViewChannel"] },
+    { id: eventer?.id, allow: ["ViewChannel"] },
+    { id: eventerka?.id, allow: ["ViewChannel"] },
+    { id: majitel?.id, allow: ["ViewChannel"] },
+    { id: majitelka?.id, allow: ["ViewChannel"] }
+  ]);
+
+  // STAVITELÉ fix
+  await stav.permissionOverwrites.set([
+    { id: everyone.id, deny: ["ViewChannel"] },
+    { id: stavitel?.id, allow: ["ViewChannel"] },
+    { id: stavitelka?.id, allow: ["ViewChannel"] },
+    { id: hlavniStavitel?.id, allow: ["ViewChannel"] },
+    { id: hlavniStavitelka?.id, allow: ["ViewChannel"] },
+    { id: majitel?.id, allow: ["ViewChannel"] },
+    { id: majitelka?.id, allow: ["ViewChannel"] }
+  ]);
+
+}
 client.login(process.env.TOKEN);
