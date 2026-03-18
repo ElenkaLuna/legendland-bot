@@ -1,4 +1,4 @@
-const { Client, GatewayIntentBits, PermissionsBitField } = require('discord.js');
+const { Client, GatewayIntentBits, PermissionsBitField, ChannelType } = require('discord.js');
 require('dotenv').config();
 
 const client = new Client({
@@ -29,73 +29,55 @@ client.once('ready', async () => {
   // ===== CATEGORY =====
   async function cat(name) {
     let c = guild.channels.cache.find(x => x.name === name);
-    if (!c) c = await guild.channels.create({ name, type: 4 });
-    return c;
-  }
-
-  const overeni = await cat('📌 Ověření');
-  const info = await cat('📚 Informace');
-  const chat = await cat('💬 Chat');
-  const vipCat = await cat('💎 VIP');
-  const adminCat = await cat('🛠️ A-TEAM');
-
-  // ===== CHANNEL =====
-  async function ch(name, type, parent, perms = []) {
-    let c = guild.channels.cache.find(x => x.name === name);
     if (!c) {
       c = await guild.channels.create({
         name,
-        type,
-        parent: parent.id,
-        permissionOverwrites: perms
+        type: ChannelType.GuildCategory
       });
     }
     return c;
   }
 
-  // ===== Ověření (jen noví vidí) =====
-  await ch('👋│vitej', 0, overeni, [
-    { id: guild.roles.everyone.id, allow: ['ViewChannel'] }
+  const vipCat = await cat('💎 VIP');
+
+  // ❗ HARD LOCK VIP
+  await vipCat.permissionOverwrites.set([
+    {
+      id: guild.roles.everyone.id,
+      deny: [PermissionsBitField.Flags.ViewChannel]
+    },
+    {
+      id: vip.id,
+      allow: [PermissionsBitField.Flags.ViewChannel]
+    },
+    {
+      id: admin.id,
+      allow: [PermissionsBitField.Flags.ViewChannel]
+    },
+    {
+      id: mod.id,
+      allow: [PermissionsBitField.Flags.ViewChannel]
+    }
   ]);
 
-  await ch('📜│pravidla', 0, overeni);
-  await ch('✅│overeni', 0, overeni);
+  // ===== CHANNEL =====
+  async function ch(name, type, parent) {
+    let c = guild.channels.cache.find(x => x.name === name);
+    if (!c) {
+      c = await guild.channels.create({
+        name,
+        type,
+        parent: parent.id
+      });
+    }
+    return c;
+  }
 
-  // ===== Informace =====
-  await ch('📘│navody', 0, info);
-  await ch('🤖│bot-navod', 0, info);
+  // VIP CHANNELS (vezmou práva z kategorie)
+  await ch('💎│vip-chat', ChannelType.GuildText, vipCat);
+  await ch('🔊│vip-hlas', ChannelType.GuildVoice, vipCat);
 
-  // ===== Chat =====
-  await ch('💬│chat', 0, chat);
-  await ch('🎵│hudba', 0, chat);
-
-  // ===== VIP (jen VIP + staff) =====
-  await ch('💎│vip-chat', 0, vipCat, [
-    { id: guild.roles.everyone.id, deny: ['ViewChannel'] },
-    { id: vip.id, allow: ['ViewChannel'] },
-    { id: admin.id, allow: ['ViewChannel'] },
-    { id: mod.id, allow: ['ViewChannel'] }
-  ]);
-
-  await ch('🔊│vip-hlas', 2, vipCat, [
-    { id: guild.roles.everyone.id, deny: ['ViewChannel'] },
-    { id: vip.id, allow: ['ViewChannel'] }
-  ]);
-
-  // ===== Admin sekce =====
-  await ch('📢│admin-oznameni', 0, adminCat, [
-    { id: guild.roles.everyone.id, deny: ['ViewChannel'] },
-    { id: admin.id, allow: ['ViewChannel'] },
-    { id: mod.id, allow: ['ViewChannel'] }
-  ]);
-
-  await ch('💬│admin-chat', 0, adminCat, [
-    { id: guild.roles.everyone.id, deny: ['ViewChannel'] },
-    { id: admin.id, allow: ['ViewChannel'] },
-    { id: mod.id, allow: ['ViewChannel'] }
-  ]);
-
-  console.log('✅ Kompletní setup hotový');
+  console.log('✅ VIP JE ZAMČENÉ SPRÁVNĚ');
 });
 
 client.login(process.env.TOKEN);
