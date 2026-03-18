@@ -115,5 +115,45 @@ client.on('messageCreate', async message => {
 
   await message.channel.send("✅ HOTOVO – STRUKTURA SEDÍ 1:1");
 });
+// ===== VERIFY =====
+
+const { ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+
+client.on('interactionCreate', async interaction => {
+
+  if (!interaction.isButton()) return;
+
+  if (interaction.customId === "verify") {
+
+    const role = interaction.guild.roles.cache.find(r => r.name.includes("Hráč"));
+
+    if (!role) return;
+
+    await interaction.member.roles.add(role);
+
+    await interaction.reply({ content: "✅ Ověření proběhlo!", ephemeral: true });
+  }
+
+});
+
+client.on('messageCreate', async message => {
+
+  if (message.content === "!verify") {
+
+    const row = new ActionRowBuilder().addComponents(
+      new ButtonBuilder()
+        .setCustomId("verify")
+        .setLabel("✅ Ověřit se")
+        .setStyle(ButtonStyle.Success)
+    );
+
+    message.channel.send({
+      content: "Klikni pro ověření",
+      components: [row]
+    });
+
+  }
+
+});
 
 client.login(process.env.TOKEN);
