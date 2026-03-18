@@ -125,6 +125,17 @@ client.on("messageCreate", async (msg) => {
   await voice(g, "🔊│Hlas 2", vipVoice);
   await voice(g, "🔊│Hlas 3", vipVoice);
   await voice(g, "🎵│Hudba", vipVoice);
+  await vipVoice.permissionOverwrites.set([
+  { id: everyone.id, deny: ["ViewChannel"] },
+
+  { id: vip.id, allow: ["ViewChannel"] },
+  { id: vipPlus.id, allow: ["ViewChannel"] },
+  { id: vipPlusPlus.id, allow: ["ViewChannel"] },
+  { id: vipLegend.id, allow: ["ViewChannel"] },
+
+  { id: majitel.id, allow: ["ViewChannel"] },
+  { id: majitelka.id, allow: ["ViewChannel"] }
+]);
 
   await vipCat.permissionOverwrites.set([
   { id: everyone.id, deny: ["ViewChannel"] },
