@@ -185,5 +185,54 @@ client.on('messageCreate', async message => {
     await channel.send("🎫 Ticket vytvořen");
   }
 });
+client.on('messageCreate', async message => {
+
+  if (message.content !== "!fix") return;
+
+  const guild = message.guild;
+
+  const get = name => guild.roles.cache.find(r => r.name === name);
+
+  const majitelka = get("🌸 Majitelka DC");
+  const majitel = get("👑 Majitel");
+
+  const technik = get("🔧 Technik");
+  const technicka = get("🔧 Technička");
+
+  const eventer = get("🎉 Eventer");
+  const eventerka = get("🎉 Eventerka");
+
+  const stavitel = get("🧱 Stavitel");
+  const stavitelka = get("🧱 Stavitelka");
+
+  const everyone = guild.roles.everyone;
+
+  let staff = get("@Staff");
+  if (!staff) {
+    staff = await guild.roles.create({
+      name: "@Staff",
+      mentionable: false
+    });
+  }
+
+  const techCh = guild.channels.cache.find(c => c.name.includes("technicka"));
+  const eventCh = guild.channels.cache.find(c => c.name.includes("event"));
+  const stavCh = guild.channels.cache.find(c => c.name.includes("stavitele"));
+
+  const set = async (ch, roles) => {
+    if (!ch) return;
+
+    await ch.permissionOverwrites.set([
+      { id: everyone.id, deny: ["ViewChannel"] },
+      ...roles.map(r => ({ id: r.id, allow: ["ViewChannel"] }))
+    ]);
+  };
+
+  await set(techCh, [technik, technicka, majitel, majitelka]);
+  await set(eventCh, [eventer, eventerka, majitel, majitelka]);
+  await set(stavCh, [stavitel, stavitelka, majitel, majitelka]);
+
+  message.reply("✅ FIX hotový");
+});
 
 client.login(process.env.TOKEN);
