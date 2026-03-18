@@ -10,7 +10,7 @@ const client = new Client({
   intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent]
 });
 
-// ===== HELPER
+// ===== HELPERS
 const getRole = (g, name) => g.roles.cache.find(r => r.name === name);
 
 async function role(g, name) {
@@ -39,7 +39,7 @@ client.on("messageCreate", async (msg) => {
   const g = msg.guild;
   const everyone = g.roles.everyone;
 
-  await msg.reply("🔥 Čistím a stavím server...");
+  await msg.reply("🔥 Stavím server...");
 
   // ===== SMAZAT KANÁLY
   for (const ch of g.channels.cache.values()) {
@@ -65,6 +65,7 @@ client.on("messageCreate", async (msg) => {
   const vipPlus = await role(g, "💠 VIP+");
   const vipPlusPlus = await role(g, "👑 VIP++");
   const vipLegend = await role(g, "✨ Legend VIP");
+
   await role(g, "🎮 Hráč");
   await role(g, "@Staff");
 
@@ -108,7 +109,7 @@ client.on("messageCreate", async (msg) => {
   await text(g, "🏠│home", mc);
   await text(g, "🏡│residence", mc);
 
-  // ===== VOICE HLAVNÍ
+  // ===== HLAVNÍ VOICE
   const voiceMain = await cat(g, "🎤 HLASOVÉ KANÁLY");
   await voice(g, "🔊│Hlas 1", voiceMain);
   await voice(g, "🔊│Hlas 2", voiceMain);
@@ -121,116 +122,58 @@ client.on("messageCreate", async (msg) => {
   await text(g, "💬│vipchat", vipCat);
 
   const vipVoice = await cat(g, "🎤 HLASOVÉ KANÁLY VIP");
+
+  await vipCat.permissionOverwrites.set([
+    { id: everyone.id, deny: ["ViewChannel"] },
+
+    { id: vip.id, allow: ["ViewChannel"] },
+    { id: vipPlus.id, allow: ["ViewChannel"] },
+    { id: vipPlusPlus.id, allow: ["ViewChannel"] },
+    { id: vipLegend.id, allow: ["ViewChannel"] },
+
+    { id: majitel.id, allow: ["ViewChannel"] },
+    { id: majitelka.id, allow: ["ViewChannel"] },
+
+    { id: technik.id, allow: ["ViewChannel"] },
+    { id: technicka.id, allow: ["ViewChannel"] }
+  ]);
+
+  await vipVoice.permissionOverwrites.set(vipCat.permissionOverwrites.cache.map(p => p));
+
   await voice(g, "🔊│Hlas 1", vipVoice);
   await voice(g, "🔊│Hlas 2", vipVoice);
   await voice(g, "🔊│Hlas 3", vipVoice);
   await voice(g, "🎵│Hudba", vipVoice);
-  await vipVoice.permissionOverwrites.set([
-  { id: everyone.id, deny: ["ViewChannel"] },
-
-  { id: vip.id, allow: ["ViewChannel"] },
-  { id: vipPlus.id, allow: ["ViewChannel"] },
-  { id: vipPlusPlus.id, allow: ["ViewChannel"] },
-  { id: vipLegend.id, allow: ["ViewChannel"] },
-
-  { id: majitel.id, allow: ["ViewChannel"] },
-  { id: majitelka.id, allow: ["ViewChannel"] }
-]);
-
-  await vipCat.permissionOverwrites.set([
-  { id: everyone.id, deny: ["ViewChannel"] },
-
-  { id: vip.id, allow: ["ViewChannel"] },
-  { id: vipPlus.id, allow: ["ViewChannel"] },
-  { id: vipPlusPlus.id, allow: ["ViewChannel"] },
-  { id: vipLegend.id, allow: ["ViewChannel"] },
-
-  { id: majitel.id, allow: ["ViewChannel"] },
-  { id: majitelka.id, allow: ["ViewChannel"] }
-]);
 
   // ===== PODPORA
   const pod = await cat(g, "🎫 Podpora");
   await text(g, "🎫│podpora", pod);
   await text(g, "📋│nabory", pod);
 
-  // ===== A-TEAM TEXT
+  // ===== A-TEAM
   const team = await cat(g, "🛡 A-TEAM");
+
   await team.permissionOverwrites.set([
-  { id: everyone.id, deny: ["ViewChannel"] },
+    { id: everyone.id, deny: ["ViewChannel"] },
 
-  { id: majitel.id, allow: ["ViewChannel"] },
-  { id: majitelka.id, allow: ["ViewChannel"] },
+    { id: majitel.id, allow: ["ViewChannel"] },
+    { id: majitelka.id, allow: ["ViewChannel"] },
 
-  { id: technik.id, allow: ["ViewChannel"] },
-  { id: technicka.id, allow: ["ViewChannel"] },
+    { id: technik.id, allow: ["ViewChannel"] },
+    { id: technicka.id, allow: ["ViewChannel"] },
 
-  { id: eventer.id, allow: ["ViewChannel"] },
-  { id: eventerka.id, allow: ["ViewChannel"] },
+    { id: eventer.id, allow: ["ViewChannel"] },
+    { id: eventerka.id, allow: ["ViewChannel"] },
 
-  { id: stavitel.id, allow: ["ViewChannel"] },
-  { id: stavitelka.id, allow: ["ViewChannel"] },
-  { id: hlavniStavitel.id, allow: ["ViewChannel"] },
-  { id: hlavniStavitelka.id, allow: ["ViewChannel"] }
-]);
+    { id: stavitel.id, allow: ["ViewChannel"] },
+    { id: stavitelka.id, allow: ["ViewChannel"] },
+    { id: hlavniStavitel.id, allow: ["ViewChannel"] },
+    { id: hlavniStavitelka.id, allow: ["ViewChannel"] }
+  ]);
+
   const tech = await text(g, "⚙│technicka-mistnost", team);
   const event = await text(g, "🎉│event-tym", team);
   const stav = await text(g, "🏗│stavitele", team);
-  // ===== AT PERMISSIONS – PŘESNÉ
-
-// základ – AT vidí jen vedení + tým
-await team.permissionOverwrites.set([
-  { id: everyone.id, deny: ["ViewChannel"] },
-
-  { id: majitelka.id, allow: ["ViewChannel"] },
-  { id: majitel.id, allow: ["ViewChannel"] },
-
-  { id: technik.id, allow: ["ViewChannel"] },
-  { id: technicka.id, allow: ["ViewChannel"] },
-
-  { id: eventer.id, allow: ["ViewChannel"] },
-  { id: eventerka.id, allow: ["ViewChannel"] },
-
-  { id: stavitel.id, allow: ["ViewChannel"] },
-  { id: stavitelka.id, allow: ["ViewChannel"] },
-  { id: hlavniStavitel.id, allow: ["ViewChannel"] },
-  { id: hlavniStavitelka.id, allow: ["ViewChannel"] }
-]);
-
-// ===== TECH (jen technici)
-await tech.permissionOverwrites.set([
-  { id: everyone.id, deny: ["ViewChannel"] },
-
-  { id: technik.id, allow: ["ViewChannel"] },
-  { id: technicka.id, allow: ["ViewChannel"] },
-
-  { id: majitel.id, allow: ["ViewChannel"] },
-  { id: majitelka.id, allow: ["ViewChannel"] }
-]);
-
-// ===== EVENT (jen event)
-await event.permissionOverwrites.set([
-  { id: everyone.id, deny: ["ViewChannel"] },
-
-  { id: eventer.id, allow: ["ViewChannel"] },
-  { id: eventerka.id, allow: ["ViewChannel"] },
-
-  { id: majitel.id, allow: ["ViewChannel"] },
-  { id: majitelka.id, allow: ["ViewChannel"] }
-]);
-
-// ===== STAVITELÉ (jen stavitelé)
-await stav.permissionOverwrites.set([
-  { id: everyone.id, deny: ["ViewChannel"] },
-
-  { id: stavitel.id, allow: ["ViewChannel"] },
-  { id: stavitelka.id, allow: ["ViewChannel"] },
-  { id: hlavniStavitel.id, allow: ["ViewChannel"] },
-  { id: hlavniStavitelka.id, allow: ["ViewChannel"] },
-
-  { id: majitel.id, allow: ["ViewChannel"] },
-  { id: majitelka.id, allow: ["ViewChannel"] }
-]);
 
   await text(g, "🛠│admin-navod", team);
   await text(g, "📜│admin-pravidla", team);
@@ -239,63 +182,33 @@ await stav.permissionOverwrites.set([
   await text(g, "🛡│AT porada", team);
   await text(g, "🤖│bot-prikazy", team);
 
-  // ===== A-TEAM VOICE (SPRÁVNĚ!)
-  const teamVoice = await cat(g, "🎤 HLASOVÉ KANÁLY AT");
-  // VOICE = stejné logiky jako text
-
-const techV = g.channels.cache.find(c => c.name === "⚙│Technická místnost");
-const eventV = g.channels.cache.find(c => c.name === "🎉│Event tým");
-const stavV = g.channels.cache.find(c => c.name === "🏗│Stavitelé");
-
-// TECH VOICE
-await techV.permissionOverwrites.set([
-  { id: everyone.id, deny: ["ViewChannel"] },
-  { id: technik.id, allow: ["ViewChannel"] },
-  { id: technicka.id, allow: ["ViewChannel"] },
-  { id: majitel.id, allow: ["ViewChannel"] },
-  { id: majitelka.id, allow: ["ViewChannel"] }
-]);
-
-// EVENT VOICE
-await eventV.permissionOverwrites.set([
-  { id: everyone.id, deny: ["ViewChannel"] },
-  { id: eventer.id, allow: ["ViewChannel"] },
-  { id: eventerka.id, allow: ["ViewChannel"] },
-  { id: majitel.id, allow: ["ViewChannel"] },
-  { id: majitelka.id, allow: ["ViewChannel"] }
-]);
-
-// STAVITEL VOICE
-await stavV.permissionOverwrites.set([
-  { id: everyone.id, deny: ["ViewChannel"] },
-  { id: stavitel.id, allow: ["ViewChannel"] },
-  { id: stavitelka.id, allow: ["ViewChannel"] },
-  { id: hlavniStavitel.id, allow: ["ViewChannel"] },
-  { id: hlavniStavitelka.id, allow: ["ViewChannel"] },
-  { id: majitel.id, allow: ["ViewChannel"] },
-  { id: majitelka.id, allow: ["ViewChannel"] }
-]);
-  await teamVoice.permissionOverwrites.set(team.permissionOverwrites.cache.map(p => p));
-
-  await voice(g, "🔊│Hlas 1", teamVoice);
-  await voice(g, "🔊│Hlas 2", teamVoice);
-  await voice(g, "🎵│Hudba", teamVoice);
-  await voice(g, "🛡│AT porada", teamVoice);
-  await voice(g, "⚙│Technická místnost", teamVoice);
-  await voice(g, "🎉│Event tým", teamVoice);
-  await voice(g, "🏗│Stavitelé", teamVoice);
-
-  // ===== PERMISSIONS
-  const lockTo = async (ch, roles) => {
+  // SPEC PERMISSIONS
+  const setPerm = async (ch, roles) => {
     await ch.permissionOverwrites.set([
       { id: everyone.id, deny: ["ViewChannel"] },
       ...roles.map(r => ({ id: r.id, allow: ["ViewChannel"] }))
     ]);
   };
 
-  await lockTo(tech, [technik, technicka, majitel, majitelka]);
-  await lockTo(event, [eventer, eventerka, majitel, majitelka]);
-  await lockTo(stav, [stavitel, stavitelka, hlavniStavitel, hlavniStavitelka, majitel, majitelka]);
+  await setPerm(tech, [technik, technicka, majitel, majitelka]);
+  await setPerm(event, [eventer, eventerka, majitel, majitelka]);
+  await setPerm(stav, [stavitel, stavitelka, hlavniStavitel, hlavniStavitelka, majitel, majitelka]);
+
+  // ===== AT VOICE
+  const teamVoice = await cat(g, "🎤 HLASOVÉ KANÁLY AT");
+
+  const techV = await voice(g, "⚙│Technická místnost", teamVoice);
+  const eventV = await voice(g, "🎉│Event tým", teamVoice);
+  const stavV = await voice(g, "🏗│Stavitelé", teamVoice);
+
+  await voice(g, "🔊│Hlas 1", teamVoice);
+  await voice(g, "🔊│Hlas 2", teamVoice);
+  await voice(g, "🎵│Hudba", teamVoice);
+  await voice(g, "🛡│AT porada", teamVoice);
+
+  await setPerm(techV, [technik, technicka, majitel, majitelka]);
+  await setPerm(eventV, [eventer, eventerka, majitel, majitelka]);
+  await setPerm(stavV, [stavitel, stavitelka, hlavniStavitel, hlavniStavitelka, majitel, majitelka]);
 
   // ===== LOGY
   const logy = await cat(g, "📜 LOGY");
@@ -319,7 +232,7 @@ await stavV.permissionOverwrites.set([
     { id: majitelka.id, allow: ["ViewChannel"] }
   ]);
 
-  await msg.reply("✅ HOTOVO – TEĎ JE TO SPRÁVNĚ");
+  await msg.reply("✅ HOTOVO – TEĎ JE TO KONEČNĚ SPRÁVNĚ");
 });
 
 client.login(process.env.TOKEN);
