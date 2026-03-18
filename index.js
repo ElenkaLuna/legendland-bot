@@ -17,9 +17,14 @@ const client = new Client({
 async function lock(channel, guild) {
   await channel.permissionOverwrites.edit(guild.roles.everyone, {
     SendMessages: false,
-    AddReactions: false,
-    CreatePublicThreads: false,
-    CreatePrivateThreads: false
+    AddReactions: false
+  });
+}
+
+// HIDE (pro staff)
+async function hide(channel, guild) {
+  await channel.permissionOverwrites.edit(guild.roles.everyone, {
+    ViewChannel: false
   });
 }
 
@@ -30,9 +35,9 @@ client.on('messageCreate', async message => {
 
   const guild = message.guild;
 
-  await message.channel.send("🔥 Nastavuji LegendLand...");
+  await message.channel.send("🔥 Kompletní setup...");
 
-  // SMAŽE VŠE
+  // SMAZAT
   for (const ch of guild.channels.cache.values()) {
     await ch.delete().catch(() => {});
   }
@@ -54,10 +59,9 @@ client.on('messageCreate', async message => {
   // ===== Informace
   const info = await cat("📢 Informace");
   const oznameni = await text("📢│oznámení", info);
+  const jak = await text("🧭│jak-se-pripojit", info);
   const hlas = await text("🌐│hlasovaci-stranky", info);
   const dyn = await text("🗺│dynmapa", info);
-
-  await text("🧭│jak-se-pripojit", info);
   await text("📱│socialni-site", info);
 
   await lock(oznameni, guild);
@@ -110,30 +114,59 @@ client.on('messageCreate', async message => {
   await text("🎫│podpora", podpora);
   await text("📋│nabory", podpora);
 
-  // ===== A-TEAM
+  // ===== A-TEAM (SKRYTÉ)
   const team = await cat("🛡 A-TEAM");
-  const adminNavod = await text("🛠│admin-navod", team);
-  const adminPravidla = await text("📜│admin-pravidla", team);
-  const ban = await text("🚨│banovaci-system", team);
-  await text("💬│admin-chat", team);
 
-  await lock(adminNavod, guild);
-  await lock(adminPravidla, guild);
-  await lock(ban, guild);
+  const at1 = await text("🛠│admin-navod", team);
+  const at2 = await text("📜│admin-pravidla", team);
+  const at3 = await text("🚨│banovaci-system", team);
+  await text("💬│admin-chat", team);
+  await text("🛡│AT porada", team);
+  await text("⚙│technicka-mistnost", team);
+  await text("🎉│event-tym", team);
+  await text("🏗│stavitele", team);
+  await text("🤖│bot-prikazy", team);
+
+  await hide(team, guild);
+
+  await lock(at1, guild);
+  await lock(at2, guild);
+  await lock(at3, guild);
+
+  // ===== AT VOICE
+  const teamVoice = await cat("🎤 HLASOVÉ KANÁLY AT");
+  await voice("🔊│Hlas 1", teamVoice);
+  await voice("🔊│Hlas 2", teamVoice);
+  await voice("🎵│Hudba", teamVoice);
+  await voice("🛡│AT porada", teamVoice);
+  await voice("⚙│Technická místnost", teamVoice);
+  await voice("🎉│Event tým", teamVoice);
+  await voice("🏗│Stavitelé", teamVoice);
+
+  await hide(teamVoice, guild);
 
   // ===== LOGY
   const logy = await cat("📜 LOGY");
+
   const l1 = await text("📜│log-zprávy", logy);
   const l2 = await text("🔨│log-moderace", logy);
   const l3 = await text("👤│log-členové", logy);
   const l4 = await text("⚙│log-server", logy);
+
+  await hide(logy, guild);
 
   await lock(l1, guild);
   await lock(l2, guild);
   await lock(l3, guild);
   await lock(l4, guild);
 
-  await message.channel.send("✅ HOTOVO – teď už to sedí");
+  // ===== SOUKROMÝ
+  const priv = await cat("🌸 SOUKROMÝ");
+  await text("🌸│majitelka-navod", priv);
+
+  await hide(priv, guild);
+
+  await message.channel.send("✅ HOTOVO – TEĎ JE TO 1:1");
 });
 
 client.login(process.env.TOKEN);
