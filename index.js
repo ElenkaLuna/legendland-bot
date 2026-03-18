@@ -1,4 +1,4 @@
-const { Client, GatewayIntentBits } = require('discord.js');
+const { Client, GatewayIntentBits, PermissionsBitField } = require('discord.js');
 require('dotenv').config();
 
 const client = new Client({
@@ -10,95 +10,120 @@ const client = new Client({
 });
 
 client.once('ready', () => {
-  console.log("✅ BOT ONLINE");
+  console.log("✅ LegendLand FINAL READY");
 });
 
 client.on('messageCreate', async message => {
 
   if (message.author.bot) return;
-  if (!message.content.startsWith("!")) return;
+  if (message.content !== "!setup") return;
 
-  const command = message.content.slice(1).toLowerCase();
   const guild = message.guild;
 
-  // ===== !setup (NIC NEMAŽE) =====
-  if (command === "setup") {
+  await message.channel.send("⚙ Nastavuji server podle finálního návrhu...");
 
-    await message.channel.send("⚙ Doplňuji server...");
+  // ===== ROLE =====
+  const role = (name) => guild.roles.cache.find(r => r.name === name);
 
-    async function createRole(name, color) {
-      if (!guild.roles.cache.find(r => r.name === name)) {
-        await guild.roles.create({ name, color });
-      }
-    }
+  const VIP = role("💎 VIP") || role("VIP");
+  const ADMIN = role("Admin");
+  const MOD = role("Mod");
+  const HRAC = role("Hráč");
 
-    // základ role (jen pokud chybí)
-    await createRole("💎 VIP", "#f1c40f");
-    await createRole("🎮 Hráč", "#2ecc71");
-    await createRole("🛡 Admin", "#e74c3c");
-
-    async function getCategory(name) {
-      let cat = guild.channels.cache.find(c => c.name === name);
-      if (!cat) cat = await guild.channels.create({ name, type: 4 });
-      return cat;
-    }
-
-    async function createText(name, parent, perms = []) {
-      let ch = guild.channels.cache.find(c => c.name === name);
-      if (!ch) {
-        ch = await guild.channels.create({
-          name,
-          type: 0,
-          parent: parent.id,
-          permissionOverwrites: perms
-        });
-      }
-    }
-
-    async function createVoice(name, parent, perms = []) {
-      let ch = guild.channels.cache.find(c => c.name === name);
-      if (!ch) {
-        ch = await guild.channels.create({
-          name,
-          type: 2,
-          parent: parent.id,
-          permissionOverwrites: perms
-        });
-      }
-    }
-
-    const vipRole = guild.roles.cache.find(r => r.name.includes("VIP"));
-
-    // ===== VIP =====
-    const vip = await getCategory("💎 VIP");
-
-    await createText("💎│vip-chat", vip, [
-      { id: guild.roles.everyone.id, deny: ['ViewChannel'] },
-      { id: vipRole?.id, allow: ['ViewChannel'] }
-    ]);
-
-    await createVoice("🔊│vip-hlas", vip, [
-      { id: guild.roles.everyone.id, deny: ['ViewChannel'] },
-      { id: vipRole?.id, allow: ['ViewChannel', 'Connect'] }
-    ]);
-
-    // ===== A-TEAM =====
-    const team = await getCategory("🛠 A-TEAM");
-
-    await createText("📢│admin-oznameni", team);
-    await createText("💬│admin-chat", team);
-    await createText("🔨│banovaci-system", team);
-
-    // ===== NÁVODY =====
-    const navody = await getCategory("📘 Návody");
-
-    await createText("📘│navody", navody);
-    await createText("🤖│bot-navod", navody);
-    await createText("🎵│hudba", navody);
-
-    await message.channel.send("✅ HOTOVO (kompletní bez mazání)");
+  // ===== CATEGORY HELPER =====
+  async function getCategory(name) {
+    let c = guild.channels.cache.find(x => x.name === name);
+    if (!c) c = await guild.channels.create({ name, type: 4 });
+    return c;
   }
 
+  // ===== CHANNEL HELPER =====
+  async function createText(name, parent, perms = []) {
+    let ch = guild.channels.cache.find(c => c.name === name);
+    if (!ch) {
+      ch = await guild.channels.create({
+        name,
+        type: 0,
+        parent: parent.id,
+        permissionOverwrites: perms
+      });
+    }
+  }
+
+  async function createVoice(name, parent, perms = []) {
+    let ch = guild.channels.cache.find(c => c.name === name);
+    if (!ch) {
+      ch = await guild.channels.create({
+        name,
+        type: 2,
+        parent: parent.id,
+        permissionOverwrites: perms
+      });
+    }
+  }
+
+  // ===== OVĚŘENÍ =====
+  const overeni = await getCategory("👋 Ověření");
+
+  await createText("👋│vitej", overeni);
+  await createText("📜│pravidla", overeni);
+  await createText("✅│overeni", overeni);
+
+  // ===== INFORMACE =====
+  const info = await getCategory("📢 Informace");
+
+  await createText("📢│oznámení", info);
+  await createText("🌐│hlasovaci-stranky", info);
+
+  // ===== KOMUNITA =====
+  const chat = await getCategory("💬 Komunita");
+
+  await createText("💬│pokec", chat);
+
+  // ===== VIP =====
+  const vip = await getCategory("💎 VIP");
+
+  await createText("💎│vip-chat", vip, [
+    { id: guild.roles.everyone.id, deny: [PermissionsBitField.Flags.ViewChannel] },
+    { id: VIP?.id, allow: [PermissionsBitField.Flags.ViewChannel] }
+  ]);
+
+  await createVoice("🔊│vip-hlas", vip, [
+    { id: guild.roles.everyone.id, deny: [PermissionsBitField.Flags.ViewChannel] },
+    { id: VIP?.id, allow: [
+      PermissionsBitField.Flags.ViewChannel,
+      PermissionsBitField.Flags.Connect
+    ]}
+  ]);
+
+  // ===== A-TEAM =====
+  const team = await getCategory("🛠 A-TEAM");
+
+  await createText("📢│admin-oznameni", team, [
+    { id: guild.roles.everyone.id, deny: [PermissionsBitField.Flags.ViewChannel] },
+    { id: ADMIN?.id, allow: [PermissionsBitField.Flags.ViewChannel] },
+    { id: MOD?.id, allow: [PermissionsBitField.Flags.ViewChannel] }
+  ]);
+
+  await createText("💬│admin-chat", team, [
+    { id: guild.roles.everyone.id, deny: [PermissionsBitField.Flags.ViewChannel] },
+    { id: ADMIN?.id, allow: [PermissionsBitField.Flags.ViewChannel] },
+    { id: MOD?.id, allow: [PermissionsBitField.Flags.ViewChannel] }
+  ]);
+
+  await createText("🔨│banovaci-system", team, [
+    { id: guild.roles.everyone.id, deny: [PermissionsBitField.Flags.ViewChannel] },
+    { id: ADMIN?.id, allow: [PermissionsBitField.Flags.ViewChannel] }
+  ]);
+
+  // ===== NÁVODY =====
+  const navody = await getCategory("📘 Návody");
+
+  await createText("📘│navody", navody);
+  await createText("🤖│bot-navod", navody);
+  await createText("🎵│hudba", navody);
+
+  await message.channel.send("✅ HOTOVO – server nastaven podle návrhu");
 });
 
 client.login(process.env.TOKEN);
