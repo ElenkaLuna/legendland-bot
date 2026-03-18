@@ -12,11 +12,11 @@ client.on('messageCreate', async message => {
 
   const guild = message.guild;
 
-  await message.channel.send("🔥 Kompletní nastavení...");
+  await message.channel.send("🔥 LegendLand setup...");
 
-  // SMAZÁNÍ
+  // SMAZÁNÍ KANÁLŮ
   for (const ch of guild.channels.cache.values()) {
-    await ch.delete().catch(() => {});
+    await ch.delete().catch(()=>{});
   }
 
   const cat = async name => await guild.channels.create({ name, type: 4 });
@@ -24,53 +24,57 @@ client.on('messageCreate', async message => {
   const voice = async (name, parent) => await guild.channels.create({ name, type: 2, parent: parent.id });
 
   const lock = async ch => {
-    await ch.permissionOverwrites.edit(guild.roles.everyone, { SendMessages: false });
+    await ch.permissionOverwrites.edit(guild.roles.everyone, { SendMessages:false });
+  };
+
+  const hide = async ch => {
+    await ch.permissionOverwrites.edit(guild.roles.everyone, { ViewChannel:false });
   };
 
   // ROLE
-  const vip = guild.roles.cache.find(r => r.name.includes("VIP"));
-
+  const vipRoles = guild.roles.cache.filter(r => r.name.includes("VIP"));
   const atRoles = guild.roles.cache.filter(r =>
+    r.name.includes("Majitel") ||
+    r.name.includes("Technik") ||
     r.name.includes("Admin") ||
     r.name.includes("Helper") ||
-    r.name.includes("Technik") ||
     r.name.includes("Stavitel") ||
     r.name.includes("Eventer") ||
     r.name.includes("Tvůrce") ||
-    r.name.includes("Doktor") ||
-    r.name.includes("Majitel")
+    r.name.includes("Doktor")
   );
 
-  // ===== Ověření
+  // 👋 Ověření
   const overeni = await cat("👋 Ověření");
-  const v = await text("👋│vitej", overeni);
-  const p = await text("📜│pravidla", overeni);
-  const o = await text("✅│overeni", overeni);
+  const vitej = await text("👋│vitej", overeni);
+  const pravidla = await text("📜│pravidla", overeni);
+  const over = await text("✅│overeni", overeni);
 
-  await lock(v);
-  await lock(p);
-  await lock(o);
+  await lock(vitej);
+  await lock(pravidla);
+  await lock(over);
 
-  // ===== Informace
+  // 📢 Informace
   const info = await cat("📢 Informace");
   const oz = await text("📢│oznámení", info);
+  const jak = await text("🧭│jak-se-pripojit", info);
   const hlas = await text("🌐│hlasovaci-stranky", info);
   const dyn = await text("🗺│dynmapa", info);
-
-  await text("🧭│jak-se-pripojit", info);
-  await text("📱│socialni-site", info);
+  const social = await text("📱│socialni-site", info);
 
   await lock(oz);
   await lock(hlas);
   await lock(dyn);
+  await lock(social);
 
-  // ===== Statistiky
+  // 📊 Statistiky
   const stats = await cat("📊 Statistiky");
-  const s = await text("📡│server-status", stats);
-  await text("👥│hraci-online", stats);
-  await lock(s);
+  const status = await text("📡│server-status", stats);
+  await text("👥│hráči-online", stats);
 
-  // ===== Komunita
+  await lock(status);
+
+  // 💬 Komunita
   const kom = await cat("💬 Komunita");
   await text("💬│pokec", kom);
   await text("📷│fotky", kom);
@@ -78,7 +82,7 @@ client.on('messageCreate', async message => {
   await text("🏗│stavby", kom);
   await text("🗳│hlasovani", kom);
 
-  // ===== Minecraft
+  // ⛏ Minecraft
   const mc = await cat("⛏ Minecraft");
   await text("⛏│mc-chat", mc);
   await text("📜│commandy", mc);
@@ -86,7 +90,7 @@ client.on('messageCreate', async message => {
   await text("🏠│home", mc);
   await text("🏡│residence", mc);
 
-  // ===== Voice
+  // 🎤 Voice hráči
   const vc = await cat("🎤 HLASOVÉ KANÁLY");
   await voice("🔊│Hlas 1", vc);
   await voice("🔊│Hlas 2", vc);
@@ -94,23 +98,29 @@ client.on('messageCreate', async message => {
   await voice("🎵│Hudba", vc);
   await voice("🌙│AFK", vc);
 
-  // ===== VIP (SPRÁVNĚ!)
-  const vipCat = await cat("💎 VIP");
+  // 💎 VIP
+  const vip = await cat("💎 VIP");
 
-  await vipCat.permissionOverwrites.edit(guild.roles.everyone, { ViewChannel: false });
+  await hide(vip);
 
-  if (vip) {
-    await vipCat.permissionOverwrites.edit(vip, { ViewChannel: true });
+  for (const r of vipRoles.values()) {
+    await vip.permissionOverwrites.edit(r, { ViewChannel:true });
+  }
+  for (const r of atRoles.values()) {
+    await vip.permissionOverwrites.edit(r, { ViewChannel:true });
   }
 
-  await text("💬│vipchat", vipCat);
+  await text("💬│vipchat", vip);
 
   const vipVoice = await cat("🎤 HLASOVÉ KANÁLY VIP");
 
-  await vipVoice.permissionOverwrites.edit(guild.roles.everyone, { ViewChannel: false });
+  await hide(vipVoice);
 
-  if (vip) {
-    await vipVoice.permissionOverwrites.edit(vip, { ViewChannel: true });
+  for (const r of vipRoles.values()) {
+    await vipVoice.permissionOverwrites.edit(r, { ViewChannel:true });
+  }
+  for (const r of atRoles.values()) {
+    await vipVoice.permissionOverwrites.edit(r, { ViewChannel:true });
   }
 
   await voice("🔊│Hlas 1", vipVoice);
@@ -118,23 +128,24 @@ client.on('messageCreate', async message => {
   await voice("🔊│Hlas 3", vipVoice);
   await voice("🎵│Hudba", vipVoice);
 
-  // ===== Podpora
+  // 🎫 Podpora
   const pod = await cat("🎫 Podpora");
   await text("🎫│podpora", pod);
   await text("📋│nabory", pod);
 
-  // ===== A-TEAM (SPRÁVNĚ!)
+  // 🛡 A-TEAM
   const team = await cat("🛡 A-TEAM");
 
-  await team.permissionOverwrites.edit(guild.roles.everyone, { ViewChannel: false });
+  await hide(team);
 
   for (const r of atRoles.values()) {
-    await team.permissionOverwrites.edit(r, { ViewChannel: true });
+    await team.permissionOverwrites.edit(r, { ViewChannel:true });
   }
 
   const ban = await text("🚨│banovaci-system", team);
-  await text("🛠│admin-navod", team);
-  await text("📜│admin-pravidla", team);
+  const navod = await text("🛠│admin-navod", team);
+  const pravidlaAT = await text("📜│admin-pravidla", team);
+
   await text("💬│admin-chat", team);
   await text("🛡│AT porada", team);
   await text("⚙│technicka-mistnost", team);
@@ -143,14 +154,16 @@ client.on('messageCreate', async message => {
   await text("🤖│bot-prikazy", team);
 
   await lock(ban);
+  await lock(navod);
+  await lock(pravidlaAT);
 
-  // ===== AT VOICE
+  // 🎤 A-TEAM VOICE
   const teamVoice = await cat("🎤 HLASOVÉ KANÁLY AT");
 
-  await teamVoice.permissionOverwrites.edit(guild.roles.everyone, { ViewChannel: false });
+  await hide(teamVoice);
 
   for (const r of atRoles.values()) {
-    await teamVoice.permissionOverwrites.edit(r, { ViewChannel: true });
+    await teamVoice.permissionOverwrites.edit(r, { ViewChannel:true });
   }
 
   await voice("🔊│Hlas 1", teamVoice);
@@ -161,10 +174,10 @@ client.on('messageCreate', async message => {
   await voice("🎉│Event tým", teamVoice);
   await voice("🏗│Stavitelé", teamVoice);
 
-  // ===== LOGY
+  // 📜 LOGY
   const logy = await cat("📜 LOGY");
 
-  await logy.permissionOverwrites.edit(guild.roles.everyone, { ViewChannel: false });
+  await hide(logy);
 
   const l1 = await text("📜│log-zprávy", logy);
   const l2 = await text("🔨│log-moderace", logy);
@@ -176,15 +189,15 @@ client.on('messageCreate', async message => {
   await lock(l3);
   await lock(l4);
 
-  // ===== SOUKROMÝ
+  // 🌸 SOUKROMÝ
   const priv = await cat("🌸 SOUKROMÝ");
 
-  await priv.permissionOverwrites.edit(guild.roles.everyone, { ViewChannel: false });
-  await priv.permissionOverwrites.edit(message.author.id, { ViewChannel: true });
+  await hide(priv);
+  await priv.permissionOverwrites.edit(message.author.id, { ViewChannel:true });
 
   await text("🌸│majitelka-navod", priv);
 
-  await message.channel.send("✅ HOTOVO – TEĎ JE TO SPRÁVNĚ");
+  await message.channel.send("✅ HOTOVO – přesně podle plánu");
 });
 
 client.login(process.env.TOKEN);
